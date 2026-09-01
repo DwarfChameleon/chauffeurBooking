@@ -100,12 +100,26 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.map = L.map(this.mapHost.nativeElement, { zoomControl: false, attributionControl: false });
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
     L.control.attribution({ prefix: false, position: 'bottomleft' }).addTo(this.map);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+    });
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap',
-    }).addTo(this.map);
+    });
+    streetLayer.addTo(this.map);
+    L.control.layers({ Streets: streetLayer, OpenStreetMap: osmLayer }, undefined, { position: 'topright' }).addTo(this.map);
     this.markerLayer.addTo(this.map);
     this.map.setView([6.5244, 3.3792], 11);
+  }
+
+  refresh() {
+    this.setupMap();
+    window.setTimeout(() => this.map?.invalidateSize(), 60);
+    window.setTimeout(() => this.map?.invalidateSize(), 260);
+    void this.renderRoute();
   }
 
   private async renderRoute() {

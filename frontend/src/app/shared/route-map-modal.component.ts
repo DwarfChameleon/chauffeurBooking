@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { IonIcon, IonModal } from '@ionic/angular/standalone';
 import { AuthService } from '../core/auth.service';
 import { RouteCoordinate, RouteMapComponent } from './route-map.component';
@@ -9,7 +9,7 @@ import { RouteCoordinate, RouteMapComponent } from './route-map.component';
   standalone: true,
   imports: [CommonModule, IonIcon, IonModal, RouteMapComponent],
   template: `
-<ion-modal class="route-map-modal" [isOpen]="isOpen" [initialBreakpoint]="0.88" [breakpoints]="[0, 0.72, 0.88, 1]" handle="true" handleBehavior="drag" (didDismiss)="close.emit()">
+<ion-modal class="route-map-modal" [isOpen]="isOpen" [initialBreakpoint]="0.88" [breakpoints]="[0, 0.72, 0.88, 1]" handle="true" handleBehavior="drag" (didPresent)="refreshMap()" (didDismiss)="close.emit()">
   <ng-template>
     <section class="map-modal-shell">
       <header>
@@ -50,6 +50,7 @@ button ion-icon { color:currentColor; font-size:22px; }
 })
 export class RouteMapModalComponent {
   private readonly auth = inject(AuthService);
+  @ViewChild(RouteMapComponent) private routeMap?: RouteMapComponent;
   @Input() isOpen = false;
   @Input() driverCoordinates: RouteCoordinate = null;
   @Input() pickupCoordinates: RouteCoordinate = null;
@@ -64,5 +65,9 @@ export class RouteMapModalComponent {
     const raw = user?.name || user?.email || user?.phone || 'User';
     const firstName = String(raw).trim().split(/[\s@]+/)[0] || 'User';
     return `${firstName} Live Map`;
+  }
+
+  refreshMap() {
+    this.routeMap?.refresh();
   }
 }
