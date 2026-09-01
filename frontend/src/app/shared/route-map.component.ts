@@ -178,8 +178,8 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     const pickup = this.asLatLng(this.pickupCoordinates) || this.extractCoordinates(this.pickupLabel) || await this.geocode(this.pickupLabel);
     const destination = this.extractCoordinates(this.destinationLabel) || await this.geocode(this.destinationLabel);
 
-    if (driver && pickup) return { start: driver, end: pickup, startLabel: this.driverLabel, endLabel: this.pickupLabel };
     if (pickup && destination) return { start: pickup, end: destination, startLabel: this.pickupLabel, endLabel: this.destinationLabel };
+    if (driver && pickup) return { start: driver, end: pickup, startLabel: this.driverLabel, endLabel: this.pickupLabel };
     return null;
   }
 
@@ -195,23 +195,64 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private async geocode(value = ''): Promise<L.LatLngExpression | null> {
-    const query = value.trim();
+    const query = this.normalizePlaceName(value);
     if (!query || ['driver', 'pickup', 'employer pickup', 'destination pending', 'pickup pending'].includes(query.toLowerCase())) return null;
     const cacheKey = query.toLowerCase();
     if (this.geocodeCache.has(cacheKey)) return this.geocodeCache.get(cacheKey) || null;
+    const knownCoordinate = this.knownPlaceCoordinate(query);
+    if (knownCoordinate) {
+      this.geocodeCache.set(cacheKey, knownCoordinate);
+      return knownCoordinate;
+    }
+
+    for (const candidate of this.geocodeCandidates(query)) {
+      const coordinate = await this.fetchGeocode(candidate);
+      if (coordinate) {
+        this.geocodeCache.set(cacheKey, coordinate);
+        return coordinate;
+      }
+    }
+
+    this.geocodeCache.set(cacheKey, null);
+    return null;
+  }
+
+  private async fetchGeocode(query: string): Promise<L.LatLngExpression | null> {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=${encodeURIComponent(query)}`;
     try {
       const response = await fetch(url, { headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error('Geocoding failed');
+      if (!response.ok) return null;
       const results = await response.json() as { lat: string; lon: string }[];
       const first = results[0];
-      const coordinate = first && Number.isFinite(Number(first.lat)) && Number.isFinite(Number(first.lon)) ? [Number(first.lat), Number(first.lon)] as L.LatLngExpression : null;
-      this.geocodeCache.set(cacheKey, coordinate);
-      return coordinate;
+      return first && Number.isFinite(Number(first.lat)) && Number.isFinite(Number(first.lon)) ? [Number(first.lat), Number(first.lon)] as L.LatLngExpression : null;
     } catch {
-      this.geocodeCache.set(cacheKey, null);
       return null;
     }
+  }
+
+  private geocodeCandidates(query: string) {
+    const routeText = `${this.title} ${this.pickupLabel} ${this.destinationLabel}`.toLowerCase();
+    const isBayelsaRoute = /bayelsa|yenagoa|yenegoa|igbogene|fmc/.test(routeText);
+    const candidates = isBayelsaRoute
+      ? [`${query}, Yenagoa, Bayelsa, Nigeria`, `${query}, Bayelsa, Nigeria`, `${query}, Nigeria`, query]
+      : [`${query}, Nigeria`, query];
+    return [...new Set(candidates)];
+  }
+
+  private normalizePlaceName(value = '') {
+    return value
+      .trim()
+      .replace(/\byennagoa\b/gi, 'Yenagoa')
+      .replace(/\byenegoa\b/gi, 'Yenagoa')
+      .replace(/\bfmc\b/gi, 'Federal Medical Centre')
+      .replace(/\s+/g, ' ');
+  }
+
+  private knownPlaceCoordinate(query: string): L.LatLngExpression | null {
+    const normalized = query.toLowerCase();
+    if (normalized.includes('federal medical centre') && normalized.includes('yenagoa')) return [4.9382647, 6.2668961];
+    if (normalized.includes('igbogene')) return [5.0361785, 6.3978462];
+    return null;
   }
 
   private markerIcon(color: string, label: string) {
