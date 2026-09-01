@@ -1,0 +1,225 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+@import '@ionic/angular/css/core.css';
+@import '@ionic/angular/css/normalize.css';
+@import '@ionic/angular/css/structure.css';
+@import '@ionic/angular/css/typography.css';
+@import '@ionic/angular/css/display.css';
+@import 'leaflet/dist/leaflet.css';
+
+:root { --ion-color-primary: #0b63ce; --ion-color-primary-rgb: 11,99,206; --ion-color-primary-contrast: #fff; --ion-background-color: #f4f7fb; --ion-text-color: #0f172a; font-family: 'Poppins', Inter, system-ui, sans-serif; }
+body { margin: 0; background: #f4f7fb; color: #0f172a; }
+ion-title, .menu-brand strong { font-family:'Poppins', Inter, system-ui, sans-serif; }
+ion-content { --color: #0f172a; }
+ion-menu.workspace-side-menu { --width: min(320px, 88vw); --height: 100vh; height:100vh; max-height:100vh; }
+ion-menu.workspace-side-menu::part(container) { height:100vh; max-height:100vh; }
+ion-menu.workspace-side-menu ion-content { --background:#f7f9fc; --color:#172033; }
+ion-menu.workspace-side-menu ion-list,
+ion-menu.workspace-side-menu .list-md,
+ion-menu.workspace-side-menu .list-ios { background:var(--menu-bg,#f7f9fc); color:var(--menu-text,#172033); }
+ion-menu.workspace-side-menu ion-list { --ion-item-background:transparent; --ion-text-color:var(--menu-text,#172033); }
+ion-menu.workspace-side-menu ion-item { --background:transparent; --color:var(--menu-text,#172033); --border-color:transparent; color:var(--menu-text,#172033); }
+ion-menu.workspace-side-menu ion-item::part(native) { background:var(--menu-item-bg,transparent); color:var(--menu-text,#172033); }
+ion-menu.workspace-side-menu ion-item ion-label { color:var(--menu-text,#172033); }
+ion-menu.workspace-side-menu ion-item ion-icon { color:var(--menu-icon,#1954d1); }
+body.dark-theme ion-menu.workspace-side-menu.employer-menu ion-content,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu ion-content,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu ion-content { --background:#0d1420; --color:#f8fafc; }
+body.dark-theme ion-menu.workspace-side-menu.employer-menu ion-list,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu ion-list,
+body.dark-theme ion-menu.workspace-side-menu.employer-menu .list-md,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu .list-md,
+body.dark-theme ion-menu.workspace-side-menu.employer-menu .list-ios,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu .list-ios,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu ion-list,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu .list-md,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu .list-ios { background:var(--menu-bg,#0d1420); color:var(--menu-text,#f8fafc); }
+body.dark-theme ion-menu.workspace-side-menu.employer-menu ion-item,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu ion-item,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu ion-item { --color:var(--menu-text,#f8fafc); color:var(--menu-text,#f8fafc); }
+body.dark-theme ion-menu.workspace-side-menu.employer-menu ion-item ion-label,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu ion-item ion-label,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu ion-item ion-label { color:var(--menu-text,#f8fafc); }
+body.dark-theme ion-menu.workspace-side-menu.employer-menu ion-item ion-icon,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu ion-item ion-icon,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu ion-item ion-icon { color:var(--menu-icon,#d8b4fe); }
+body.dark-theme ion-menu.workspace-side-menu.employer-menu .workspace-menu-header ion-toolbar,
+body.dark-theme ion-menu.workspace-side-menu.admin-menu .workspace-menu-header ion-toolbar,
+body.driver-dark-theme ion-menu.workspace-side-menu.driver-menu .workspace-menu-header ion-toolbar { --background:#0b1424; --color:#f8fafc; }
+/* Routed pages wrap ion-content in a page shell. Keep that shell in the
+   Ionic page flex column so ion-content receives the available viewport. */
+ion-router-outlet > * { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.employer-page,
+.driver-page { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 100%; }
+.employer-page > ion-content,
+.driver-page > ion-content { flex: 1 1 auto; min-height: 0; }
+.page-shell { max-width: 1120px; margin: 0 auto; padding: 24px; }
+.hero { background: linear-gradient(135deg, #071b3a, #0b63ce); color: white; border-radius: 22px; padding: 40px; }
+.eyebrow { letter-spacing: .12em; text-transform: uppercase; font-size: .75rem; font-weight: 700; opacity: .75; }
+.muted { color: #64748b; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, .05); }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+ion-list { background: transparent; }
+ion-item { --background: #ffffff; --color: #0f172a; --border-color: #dbe3ef; margin-top: 12px; border-radius: 12px; }
+ion-label h1,
+ion-label h2,
+ion-label h3,
+ion-card-title,
+.card h1,
+.card h2,
+.metric {
+  color: #0f172a;
+}
+ion-label p,
+ion-card-content,
+.card p {
+  color: #475569;
+}
+
+body.dark-theme { background:#070b13; color:#f8fafc; }
+body.dark-theme ion-content { --background:#070b13; --color:#f8fafc; }
+body.dark-theme .employer-page { --ink:#f8fafc !important; --muted:#a8b3c7 !important; --line:rgba(255,255,255,.12) !important; background:#070b13 !important; color:#f8fafc !important; }
+body.dark-theme .employer-page .panel,
+body.dark-theme .employer-page .profile-summary,
+body.dark-theme .employer-page .work-panel,
+body.dark-theme .employer-page .stat-card,
+body.dark-theme .employer-page .driver-card,
+body.dark-theme .employer-page .empty,
+body.dark-theme .employer-page .filter-panel { background:#0d1420 !important; border-color:rgba(255,255,255,.12) !important; box-shadow:0 8px 22px rgba(0,0,0,.24) !important; }
+body.dark-theme .employer-page h1,
+body.dark-theme .employer-page h2,
+body.dark-theme .employer-page h3,
+body.dark-theme .employer-page strong,
+body.dark-theme .employer-page label { color:#f8fafc; }
+body.dark-theme .employer-page p,
+body.dark-theme .employer-page span,
+body.dark-theme .employer-page small { color:#a8b3c7; }
+body.dark-theme .employer-page input,
+body.dark-theme .employer-page select,
+body.dark-theme .employer-page textarea { color:#f8fafc !important; background:#111927 !important; border-color:rgba(255,255,255,.16) !important; }
+body.dark-theme .employer-page .route-box,
+body.dark-theme .employer-page .selected-driver,
+body.dark-theme .employer-page .location-callout { background:#111927 !important; }
+body.dark-theme .employer-page .bottom-nav { background:#0d1420 !important; border-color:rgba(255,255,255,.12) !important; }
+body.dark-theme .employer-page .nav-item { color:#a8b3c7 !important; }
+body.dark-theme .employer-page .nav-item.active { color:#8db4ff !important; background:#172846 !important; }
+body.dark-theme .employer-page .icon-button,
+body.dark-theme .employer-page .ghost-button,
+body.dark-theme .employer-page .card-edit { background:#172846 !important; color:#8db4ff !important; }
+body.dark-theme .employer-page .theme-toggle { --color:#fbbf24; }
+
+body.driver-light-theme .ion-page.driver-page,
+body.driver-light-theme .driver-page { --background:#f4f7fb !important; --workspace-bg:#f4f7fb !important; --dashboard-bg:#f4f7fb !important; --panel-bg:#ffffff !important; --border-color:#dbe5f2 !important; --text-secondary:#5b6b82 !important; background-color:#f4f7fb !important; background-image:none !important; color:#172033 !important; }
+body.driver-light-theme .ion-page.driver-page > ion-content,
+body.driver-light-theme .driver-page .driver-workspace,
+body.driver-light-theme .driver-page .driver-dashboard { --background:#f4f7fb !important; --color:#172033 !important; background:#f4f7fb !important; color:#172033 !important; }
+body.driver-light-theme .driver-page .dashboard-shell,
+body.driver-light-theme .driver-page .workspace-shell { background:#f4f7fb !important; color:#172033 !important; }
+body.driver-light-theme .driver-page .availability-card,
+body.driver-light-theme .driver-page .next-booking-card,
+body.driver-light-theme .driver-page .summary-grid article,
+body.driver-light-theme .driver-page .earnings-hero > div,
+body.driver-light-theme .driver-page .profile-card,
+body.driver-light-theme .driver-page .stat-card,
+body.driver-light-theme .driver-page .panel { background:linear-gradient(180deg,#ffffff,#fdfcff) !important; border-color:#dbe5f2 !important; box-shadow:0 10px 26px rgba(20,32,61,.08) !important; color:#172033 !important; }
+body.driver-light-theme .driver-page .stats-grid .stat-card:nth-child(1) { border-top-color:#7c3aed !important; background:linear-gradient(180deg,rgba(124,58,237,.18),#fff 48%) !important; }
+body.driver-light-theme .driver-page .stats-grid .stat-card:nth-child(2) { border-top-color:#12805c !important; background:linear-gradient(180deg,rgba(18,128,92,.16),#fff 48%) !important; }
+body.driver-light-theme .driver-page .stats-grid .stat-card:nth-child(3) { border-top-color:#1954d1 !important; background:linear-gradient(180deg,rgba(25,84,209,.17),#fff 48%) !important; }
+body.driver-light-theme .driver-page .stats-grid .stat-card:nth-child(4) { border-top-color:#d97706 !important; background:linear-gradient(180deg,rgba(217,119,6,.17),#fff 48%) !important; }
+body.driver-light-theme .driver-page h1,
+body.driver-light-theme .driver-page h2,
+body.driver-light-theme .driver-page h3,
+body.driver-light-theme .driver-page strong,
+body.driver-light-theme .driver-page label,
+body.driver-light-theme .driver-page .profile-card strong,
+body.driver-light-theme .driver-page .summary-grid strong,
+body.driver-light-theme .driver-page .earnings-hero strong,
+body.driver-light-theme .driver-page .booking-row h3,
+body.driver-light-theme .driver-page .route-row strong,
+body.driver-light-theme .driver-page .document-card strong,
+body.driver-light-theme .driver-page .check-row p,
+body.driver-light-theme .driver-page .stat-card h3,
+body.driver-light-theme .driver-page .schedule-main h3,
+body.driver-light-theme .driver-page .location-footer h3,
+body.driver-light-theme .driver-page .activity-content h3 { color:#172033 !important; }
+body.driver-light-theme .driver-page p,
+body.driver-light-theme .driver-page small,
+body.driver-light-theme .driver-page span,
+body.driver-light-theme .driver-page .subtitle,
+body.driver-light-theme .driver-page .muted,
+body.driver-light-theme .driver-page .workspace-header p,
+body.driver-light-theme .driver-page .profile-card span,
+body.driver-light-theme .driver-page .profile-card p,
+body.driver-light-theme .driver-page .summary-grid span,
+body.driver-light-theme .driver-page .earnings-hero span,
+body.driver-light-theme .driver-page .earnings-hero p,
+body.driver-light-theme .driver-page .booking-row p,
+body.driver-light-theme .driver-page .booking-row span,
+body.driver-light-theme .driver-page .state,
+body.driver-light-theme .driver-page .stat-card p,
+body.driver-light-theme .driver-page .schedule-main p,
+body.driver-light-theme .driver-page .location-footer p,
+body.driver-light-theme .driver-page .activity-content p,
+body.driver-light-theme .driver-page .activity-time { color:#64748b !important; }
+body.driver-light-theme .driver-page .eyebrow,
+body.driver-light-theme .driver-page .panel-kicker,
+body.driver-light-theme .driver-page .section-tag { color:#6d28d9 !important; opacity:1 !important; }
+body.driver-light-theme .driver-page ion-icon,
+body.driver-light-theme .driver-page .notification-btn,
+body.driver-light-theme .driver-page .notification-btn ion-icon,
+body.driver-light-theme .driver-page .panel-header ion-button { color:#1954d1 !important; --color:#1954d1 !important; }
+body.driver-light-theme .driver-page .availability-icon,
+body.driver-light-theme .driver-page .availability-nav div { background:linear-gradient(135deg,#7c3aed,#1954d1) !important; color:#fff !important; box-shadow:0 12px 26px rgba(124,58,237,.28) !important; }
+body.driver-light-theme .driver-page .availability-icon ion-icon,
+body.driver-light-theme .driver-page .availability-nav ion-icon,
+body.driver-light-theme .driver-page .primary-action ion-icon,
+body.driver-light-theme .driver-page .schedule-btn ion-icon { color:#fff !important; --color:#fff !important; }
+body.driver-light-theme .driver-page .stat-icon.purple,
+body.driver-light-theme .driver-page .activity-icon.booking,
+body.driver-light-theme .driver-page .back-button,
+body.driver-light-theme .driver-page .card-edit,
+body.driver-light-theme .driver-page .edit-action,
+body.driver-light-theme .driver-page .signout-action,
+body.driver-light-theme .driver-page .avatar-preview,
+body.driver-light-theme .driver-page .score-ring { background:rgba(124,58,237,.20) !important; color:#6d28d9 !important; --background:rgba(124,58,237,.20) !important; --color:#6d28d9 !important; border-color:rgba(124,58,237,.25) !important; }
+body.driver-light-theme .driver-page .stat-icon.green,
+body.driver-light-theme .driver-page .activity-icon.payment,
+body.driver-light-theme .driver-page .check-row span.done { background:rgba(18,128,92,.18) !important; color:#12805c !important; }
+body.driver-light-theme .driver-page .stat-icon.blue,
+body.driver-light-theme .driver-page .activity-icon.completed { background:rgba(25,84,209,.17) !important; color:#1954d1 !important; }
+body.driver-light-theme .driver-page .stat-icon.orange { background:rgba(217,119,6,.18) !important; color:#b45309 !important; }
+body.driver-light-theme .driver-page .panel-header ion-icon { background:linear-gradient(135deg,rgba(124,58,237,.22),rgba(25,84,209,.14)) !important; color:#6d28d9 !important; }
+body.driver-light-theme .driver-page input,
+body.driver-light-theme .driver-page select,
+body.driver-light-theme .driver-page textarea { background:#ffffff !important; color:#172033 !important; border-color:#dbe5f2 !important; box-shadow:none !important; }
+body.driver-light-theme .driver-page input[readonly],
+body.driver-light-theme .driver-page textarea[readonly],
+body.driver-light-theme .driver-page select:disabled { background:transparent !important; color:#172033 !important; border-color:transparent !important; }
+body.driver-light-theme .driver-page .map-placeholder,
+body.driver-light-theme .driver-page .upload-modal-shell,
+body.driver-light-theme .driver-page .upload-source-grid button,
+body.driver-light-theme .driver-page .upload-preview { background:#ffffff !important; color:#172033 !important; border-color:#dbe5f2 !important; }
+body.driver-light-theme .driver-page .map-placeholder { background:radial-gradient(circle at 50% 55%,rgba(124,58,237,.20),transparent 35%),#eef4ff !important; }
+body.driver-light-theme .driver-page .map-grid { opacity:.28 !important; background-image:linear-gradient(rgba(25,84,209,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(25,84,209,.13) 1px,transparent 1px) !important; }
+body.driver-light-theme .driver-page .timeline-line,
+body.driver-light-theme .driver-page .schedule-main,
+body.driver-light-theme .driver-page .activity-item,
+body.driver-light-theme .driver-page .document-card,
+body.driver-light-theme .driver-page .route-row { border-color:#e2e8f0 !important; }
+body.driver-light-theme .driver-page .booking-meta,
+body.driver-light-theme .driver-page .booking-meta ion-icon,
+body.driver-light-theme .driver-page .availability-toggle span,
+body.driver-light-theme .driver-page .schedule-time { color:#475569 !important; }
+body.driver-light-theme .driver-page .pending,
+body.driver-light-theme .driver-page .upcoming { color:#92400e !important; background:rgba(245,158,11,.20) !important; }
+body.driver-light-theme .driver-page .confirmed { color:#6d28d9 !important; background:rgba(124,58,237,.18) !important; }
+body.driver-light-theme .driver-page .arrived,
+body.driver-light-theme .driver-page .completed { color:#12805c !important; background:rgba(18,128,92,.18) !important; }
+body.driver-light-theme .driver-page .cancelled { color:#b42318 !important; background:rgba(244,63,94,.16) !important; }
+body.driver-light-theme .driver-page .driver-bottom-nav { background:rgba(255,255,255,.96) !important; border-color:#e2e8f0 !important; }
+body.driver-light-theme .driver-page .nav-item { color:#64748b !important; }
+body.driver-light-theme .driver-page .nav-item.active { color:#6d28d9 !important; }
+body.driver-light-theme .driver-page .theme-toggle { --color:#1954d1 !important; }
+body.driver-light-theme app-workspace-header.driver-toolbar ion-toolbar { --background:rgba(255,255,255,.98) !important; --color:#172033 !important; --border-color:#dbe5f2 !important; }
+body.driver-light-theme app-workspace-header.driver-toolbar .toolbar-icon { --color:#1954d1 !important; --background:rgba(25,84,209,.12) !important; }
+body.driver-light-theme app-workspace-header.driver-toolbar .signout-action { --color:#7c3aed !important; --background:rgba(124,58,237,.14) !important; }
