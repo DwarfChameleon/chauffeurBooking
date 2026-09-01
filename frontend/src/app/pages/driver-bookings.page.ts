@@ -83,6 +83,7 @@ type Booking = { id: string; customerName: string; pickup: string; destination: 
     [status]="selectedRouteBooking?.status || ''"
     [driverLabel]="'Driver'"
     [pickupLabel]="selectedRouteBooking?.pickup || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destination || ''"
     [routeTitle]="selectedRouteBooking ? selectedRouteBooking.pickup + ' to ' + selectedRouteBooking.destination : 'Requested route'"
     (close)="closeRouteMap()">
   </app-route-map-modal>

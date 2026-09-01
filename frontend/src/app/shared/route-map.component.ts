@@ -20,11 +20,11 @@ export type RouteCoordinate = { latitude: number; longitude: number } | null | u
   <div #mapHost class="route-map" [class.pending]="!hasCoordinates" [style.height]="mapHeight"></div>
   <div class="route-map-empty" *ngIf="!hasCoordinates">
     <strong>Location pending</strong>
-    <small>Driver and pickup coordinates are required to show the live route.</small>
+    <small>Add live coordinates or searchable pickup and destination names to show this route.</small>
   </div>
   <div class="route-map-meta" *ngIf="hasCoordinates">
-    <span><i class="driver-dot"></i>{{ driverLabel }}</span>
-    <span><i class="pickup-dot"></i>{{ pickupLabel }}</span>
+    <span><i class="driver-dot"></i>{{ resolvedStartLabel }}</span>
+    <span><i class="pickup-dot"></i>{{ resolvedEndLabel }}</span>
   </div>
 </section>
   `,
@@ -60,6 +60,7 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() status = '';
   @Input() driverLabel = 'Driver';
   @Input() pickupLabel = 'Pickup';
+  @Input() destinationLabel = '';
   @Input() mapHeight = '260px';
   @ViewChild('mapHost') private mapHost?: ElementRef<HTMLElement>;
 
@@ -67,9 +68,14 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private routeLayer?: L.Polyline;
   private markerLayer = L.layerGroup();
   private routeRequest = 0;
+  private resolvedStart: L.LatLngExpression | null = null;
+  private resolvedEnd: L.LatLngExpression | null = null;
+  resolvedStartLabel = '';
+  resolvedEndLabel = '';
+  private geocodeCache = new Map<string, L.LatLngExpression | null>();
 
   get hasCoordinates() {
-    return Boolean(this.asLatLng(this.driverCoordinates) && this.asLatLng(this.pickupCoordinates));
+    return Boolean(this.resolvedStart && this.resolvedEnd);
   }
 
   get isLive() {
@@ -87,7 +93,7 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.map) return;
-    if (changes['driverCoordinates'] || changes['pickupCoordinates'] || changes['status']) void this.renderRoute();
+    if (changes['driverCoordinates'] || changes['pickupCoordinates'] || changes['driverLabel'] || changes['pickupLabel'] || changes['destinationLabel'] || changes['status']) void this.renderRoute();
   }
 
   ngOnDestroy() {
@@ -130,17 +136,21 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.routeLayer?.remove();
     this.routeLayer = undefined;
 
-    const driver = this.asLatLng(this.driverCoordinates);
-    const pickup = this.asLatLng(this.pickupCoordinates);
-    if (!driver || !pickup) return;
+    const requestId = ++this.routeRequest;
+    const endpoint = await this.resolveRouteEndpoints();
+    if (requestId !== this.routeRequest || !this.map) return;
+    this.resolvedStart = endpoint?.start || null;
+    this.resolvedEnd = endpoint?.end || null;
+    this.resolvedStartLabel = endpoint?.startLabel || '';
+    this.resolvedEndLabel = endpoint?.endLabel || '';
+    if (!endpoint) return;
 
     const driverIcon = this.markerIcon('#1954d1', 'Driver');
     const pickupIcon = this.markerIcon('#16a34a', 'Pickup');
-    L.marker(driver, { icon: driverIcon }).bindTooltip(this.driverLabel).addTo(this.markerLayer);
-    L.marker(pickup, { icon: pickupIcon }).bindTooltip(this.pickupLabel).addTo(this.markerLayer);
+    L.marker(endpoint.start, { icon: driverIcon }).bindTooltip(endpoint.startLabel).addTo(this.markerLayer);
+    L.marker(endpoint.end, { icon: pickupIcon }).bindTooltip(endpoint.endLabel).addTo(this.markerLayer);
 
-    const requestId = ++this.routeRequest;
-    const points = await this.fetchRoute(driver, pickup).catch(() => [driver, pickup]);
+    const points = await this.fetchRoute(endpoint.start, endpoint.end).catch(() => [endpoint.start, endpoint.end]);
     if (requestId !== this.routeRequest || !this.map) return;
 
     this.routeLayer = L.polyline(points, { color: '#1954d1', weight: 5, opacity: 0.88, lineCap: 'round', lineJoin: 'round' }).addTo(this.map);
@@ -161,6 +171,47 @@ export class RouteMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private asLatLng(value: RouteCoordinate): L.LatLngExpression | null {
     if (!value || !Number.isFinite(Number(value.latitude)) || !Number.isFinite(Number(value.longitude))) return null;
     return [Number(value.latitude), Number(value.longitude)];
+  }
+
+  private async resolveRouteEndpoints() {
+    const driver = this.asLatLng(this.driverCoordinates) || this.extractCoordinates(this.driverLabel);
+    const pickup = this.asLatLng(this.pickupCoordinates) || this.extractCoordinates(this.pickupLabel) || await this.geocode(this.pickupLabel);
+    const destination = this.extractCoordinates(this.destinationLabel) || await this.geocode(this.destinationLabel);
+
+    if (driver && pickup) return { start: driver, end: pickup, startLabel: this.driverLabel, endLabel: this.pickupLabel };
+    if (pickup && destination) return { start: pickup, end: destination, startLabel: this.pickupLabel, endLabel: this.destinationLabel };
+    return null;
+  }
+
+  private extractCoordinates(value = ''): L.LatLngExpression | null {
+    const coordinatePair = value.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
+    if (!coordinatePair) return null;
+    const first = Number(coordinatePair[1]);
+    const second = Number(coordinatePair[2]);
+    if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+    if (Math.abs(first) <= 90 && Math.abs(second) <= 180) return [first, second];
+    if (Math.abs(second) <= 90 && Math.abs(first) <= 180) return [second, first];
+    return null;
+  }
+
+  private async geocode(value = ''): Promise<L.LatLngExpression | null> {
+    const query = value.trim();
+    if (!query || ['driver', 'pickup', 'employer pickup', 'destination pending', 'pickup pending'].includes(query.toLowerCase())) return null;
+    const cacheKey = query.toLowerCase();
+    if (this.geocodeCache.has(cacheKey)) return this.geocodeCache.get(cacheKey) || null;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=${encodeURIComponent(query)}`;
+    try {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!response.ok) throw new Error('Geocoding failed');
+      const results = await response.json() as { lat: string; lon: string }[];
+      const first = results[0];
+      const coordinate = first && Number.isFinite(Number(first.lat)) && Number.isFinite(Number(first.lon)) ? [Number(first.lat), Number(first.lon)] as L.LatLngExpression : null;
+      this.geocodeCache.set(cacheKey, coordinate);
+      return coordinate;
+    } catch {
+      this.geocodeCache.set(cacheKey, null);
+      return null;
+    }
   }
 
   private markerIcon(color: string, label: string) {

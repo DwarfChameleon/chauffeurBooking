@@ -147,6 +147,7 @@ type DashboardResponse = {
     [status]="selectedRouteBooking?.status || ''"
     [driverLabel]="selectedRouteBooking?.driverName || 'Driver'"
     [pickupLabel]="selectedRouteBooking?.pickupAddress || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destinationAddress || ''"
     [routeTitle]="selectedRouteBooking ? selectedRouteBooking.pickupAddress + ' to ' + selectedRouteBooking.driverName : 'Requested route'"
     (close)="closeRouteMap()">
   </app-route-map-modal>

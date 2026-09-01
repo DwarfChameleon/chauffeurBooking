@@ -25,6 +25,7 @@ import { RouteCoordinate, RouteMapComponent } from './route-map.component';
         [status]="status"
         [driverLabel]="driverLabel"
         [pickupLabel]="pickupLabel"
+        [destinationLabel]="destinationLabel"
         [title]="routeTitle"
         eyebrow="Leaflet route"
         mapHeight="calc(100vh - 210px)">
@@ -57,6 +58,7 @@ export class RouteMapModalComponent {
   @Input() status = '';
   @Input() driverLabel = 'Driver';
   @Input() pickupLabel = 'Pickup';
+  @Input() destinationLabel = '';
   @Input() routeTitle = 'Requested route';
   @Output() close = new EventEmitter<void>();
 

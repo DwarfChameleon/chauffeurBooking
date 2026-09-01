@@ -69,6 +69,7 @@ import { RouteMapModalComponent } from '../shared/route-map-modal.component';
     [status]="selectedRouteBooking?.status || ''"
     [driverLabel]="selectedRouteBooking?.driverName || 'Driver'"
     [pickupLabel]="selectedRouteBooking?.pickupAddress || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destinationAddress || ''"
     [routeTitle]="selectedRouteBooking ? selectedRouteBooking.employerName + ' to ' + selectedRouteBooking.driverName : 'Requested route'"
     (close)="closeRouteMap()">
   </app-route-map-modal>
