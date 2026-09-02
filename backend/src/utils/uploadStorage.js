@@ -1,13 +1,52 @@
+const fs = require("fs/promises");
 const { v2: cloudinary } = require("cloudinary");
 
 const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "bjed-chauffeur";
 
-if (!process.env.CLOUDINARY_URL && process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+configureCloudinary();
+
+function configureCloudinary() {
+  if (process.env.CLOUDINARY_URL) {
+    const credentials = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+    if (credentials) {
+      cloudinary.config({ ...credentials, secure: true });
+      return;
+    }
+  }
+
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure: true,
+    });
+  }
+}
+
+function parseCloudinaryUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "cloudinary:") return null;
+    return {
+      cloud_name: url.hostname,
+      api_key: decodeURIComponent(url.username),
+      api_secret: decodeURIComponent(url.password),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function configuredCloudName() {
+  return cloudinary.config().cloud_name || process.env.CLOUDINARY_CLOUD_NAME || "";
+}
+
+function uploadStorageError(message, cause) {
+  const error = new Error(message);
+  error.status = 502;
+  error.cause = cause;
+  return error;
 }
 
 function isCloudinaryConfigured() {
@@ -40,14 +79,22 @@ async function resolveUploadUrl(req, file, folder) {
       unique_filename: true,
       overwrite: false,
     });
-    return result.secure_url || result.url || fallbackUrl;
+    const uploadUrl = result.secure_url || result.url;
+    if (!uploadUrl) throw new Error("Cloudinary did not return a file URL.");
+    await fs.unlink(file.path).catch(() => undefined);
+    return uploadUrl;
   } catch (error) {
-    console.warn("Cloudinary upload failed; using local upload fallback:", error.message);
-    return fallbackUrl;
+    console.error("Cloudinary upload failed:", {
+      message: error.message,
+      cloudName: configuredCloudName() || "missing",
+      folder: uploadFolder(folder),
+    });
+    throw uploadStorageError("Cloudinary upload failed. Please check the Cloudinary environment variables and try again.", error);
   }
 }
 
 module.exports = {
+  configuredCloudName,
   isCloudinaryConfigured,
   localUploadUrl,
   resolveUploadUrl,

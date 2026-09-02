@@ -93,7 +93,7 @@ exports.uploadProfilePicture = async (req, res) => {
     res.json(buildDriverProfileResponse(populatedDriver, bookings));
   } catch (error) {
     console.error('Profile picture upload failed:', error);
-    res.status(500).json({ message: 'Could not upload profile picture' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : 'Could not upload profile picture' });
   }
 };
 
@@ -115,7 +115,7 @@ exports.uploadDriverDocument = async (req, res) => {
     res.json(buildDriverProfileResponse(populatedDriver, bookings));
   } catch (error) {
     console.error('Driver document upload failed:', error);
-    res.status(500).json({ message: 'Could not upload driver document' });
+    res.status(error.status || 500).json({ message: error.status ? error.message : 'Could not upload driver document' });
   }
 };
 

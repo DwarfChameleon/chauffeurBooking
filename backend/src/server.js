@@ -12,6 +12,7 @@ const employerRoutes = require("./routes/employerRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const { configureRealtime } = require("./utils/realtime");
+const uploadStorage = require("./utils/uploadStorage");
 
 const app = express();
 const server = http.createServer(app);
@@ -79,6 +80,11 @@ app.get("/api/health", (req, res) => {
     status: "ok",
     mongo: mongoose.connection.readyState,
     databaseReady: mongoReady,
+    uploadStorage: {
+      cloudinaryConfigured: uploadStorage.isCloudinaryConfigured(),
+      cloudName: uploadStorage.configuredCloudName(),
+      fallback: uploadStorage.isCloudinaryConfigured() ? "disabled_when_configured" : "local_uploads",
+    },
     timestamp: new Date().toISOString(),
   });
 });
