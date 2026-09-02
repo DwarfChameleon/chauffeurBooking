@@ -2,13 +2,16 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "check": "node --check src/server.js && node --check src/controllers/authController.js && node --check src/controllers/driverController.js && node --check src/controllers/bookingController.js && node --check src/routes/driverRoutes.js",
+    "check": "node --check src/server.js && node --check src/app.js && node --check src/controllers/authController.js && node --check src/controllers/adminController.js && node --check src/controllers/driverController.js && node --check src/controllers/bookingController.js && node --check src/controllers/employerController.js && node --check src/controllers/locationController.js && node --check src/routes/driverRoutes.js && node --check src/routes/locationRoutes.js && node --check src/utils/locationService.js",
     "test": "npm run check"
   },
   "keywords": [],

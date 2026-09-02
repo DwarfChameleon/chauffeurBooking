@@ -8,6 +8,7 @@ const driverRoutes = require("./routes/driverRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const employerRoutes = require("./routes/employerRoutes");
+const locationRoutes = require("./routes/locationRoutes");
 
 const app = express();
 
@@ -47,22 +48,34 @@ app.use(cors({
 }));
 
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || "127.0.0.1";
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+const HOST = process.env.HOST || "0.0.0.0";
+const MONGO_URI = process.env.MONGO_URI || (process.env.NODE_ENV === "production" ? "" : "mongodb://127.0.0.1:27017/chauffeurBooking");
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log("MongoDB Connection Error:", err));
+if (!MONGO_URI) {
+  console.error("MongoDB Connection Error: MONGO_URI is required in production");
+} else {
+  mongoose
+    .connect(MONGO_URI)
+    .then(() => console.log("MongoDB Connected"))
+    .catch((err) => console.log("MongoDB Connection Error:", err));
+}
 
 app.get("/", (req, res) => {
   res.send("API is running...");
+});
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    mongo: mongoose.connection.readyState,
+    timestamp: new Date().toISOString(),
+  });
 });
 app.use("/api/drivers", driverRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/employers", employerRoutes);
+app.use("/api/locations", locationRoutes);
 
 app.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
