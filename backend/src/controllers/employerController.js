@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Driver = require('../models/Driver');
 const Booking = require('../models/Booking');
 const { NIGERIA_PHONE_ERROR, isValidNigeriaPhone, normalizeNigeriaPhone } = require('../utils/nigeriaPhone');
+const { resolveUploadUrl } = require('../utils/uploadStorage');
 
 const STATES = ['Bayelsa', 'Delta', 'Benin', 'Rivers', 'Calabar', 'Abia', 'Akwa Ibom', 'Edo', 'Abuja', 'Lagos'];
 const EMPLOYER_DOCUMENT_KEYS = ['id', 'proofOfAddress'];
@@ -74,7 +75,7 @@ exports.uploadEmployerProfilePicture = async (req, res) => {
     if (!req.file) return res.status(400).json({ message: 'Profile picture is required' });
     const user = await requireEmployer(req.user.id);
     user.employerProfile = user.employerProfile || {};
-    user.employerProfile.profilePicture = toUploadUrl(req, req.file);
+    user.employerProfile.profilePicture = await resolveUploadUrl(req, req.file, 'employers/profile-pictures');
     await user.save();
     res.json({ profile: serializeEmployer(user), completeness: calculateEmployerCompleteness(user), stateOptions: STATES });
   } catch (error) {
@@ -91,7 +92,7 @@ exports.uploadEmployerDocument = async (req, res) => {
     const user = await requireEmployer(req.user.id);
     user.employerProfile = user.employerProfile || {};
     user.employerProfile.documents = user.employerProfile.documents || {};
-    user.employerProfile.documents[documentKey] = { status: 'pending', reference: toUploadUrl(req, req.file) };
+    user.employerProfile.documents[documentKey] = { status: 'pending', reference: await resolveUploadUrl(req, req.file, `employers/documents/${documentKey}`) };
     await user.save();
 
     res.json({ profile: serializeEmployer(user), completeness: calculateEmployerCompleteness(user), stateOptions: STATES });
@@ -337,13 +338,6 @@ function calculateDistance(from, to) {
   const longitudeDelta = toRadians(to.longitude - from.longitude);
   const a = Math.sin(latitudeDelta / 2) ** 2 + Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(to.latitude)) * Math.sin(longitudeDelta / 2) ** 2;
   return Math.round(earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
-}
-
-function toUploadUrl(req, file) {
-  const normalizedPath = file.path.replace(/\\/g, '/');
-  const uploadIndex = normalizedPath.lastIndexOf('/uploads/');
-  const publicPath = uploadIndex >= 0 ? normalizedPath.slice(uploadIndex) : `/uploads/${file.filename}`;
-  return `${req.protocol}://${req.get('host')}${publicPath}`;
 }
 
 function toRadians(value) { return value * Math.PI / 180; }

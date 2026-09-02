@@ -74,9 +74,11 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 app.get("/api/health", (req, res) => {
-  res.json({
+  const mongoReady = mongoose.connection.readyState === 1;
+  res.status(mongoReady ? 200 : 503).json({
     status: "ok",
     mongo: mongoose.connection.readyState,
+    databaseReady: mongoReady,
     timestamp: new Date().toISOString(),
   });
 });

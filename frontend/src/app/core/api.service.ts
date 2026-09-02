@@ -4,7 +4,8 @@ import { Observable, catchError, filter, firstValueFrom, lastValueFrom, map, swi
 
 const API_PORT = '5000';
 const API_PATH = '/api';
-const API_URL = resolveApiUrl();
+export const API_URL = resolveApiUrl();
+export const API_ORIGIN = resolveApiOrigin(API_URL);
 const FALLBACK_API_URL = resolveFallbackApiUrl(API_URL);
 const OFFLINE_MESSAGE = 'No internet connection. Please check your network and try again.';
 const SERVER_UNREACHABLE_MESSAGE = 'Could not connect to the server. Please check your connection and try again.';
@@ -25,6 +26,18 @@ function resolveFallbackApiUrl(primaryUrl: string) {
   const configuredFallback = (globalThis as RuntimeEnv).__env?.fallbackApiUrl;
   const fallback = configuredFallback ? configuredFallback.replace(/\/$/, '') : resolveLocalApiUrl();
   return fallback !== primaryUrl ? fallback : '';
+}
+
+function resolveApiOrigin(apiUrl: string) {
+  try {
+    const url = new URL(apiUrl);
+    url.pathname = url.pathname.replace(/\/api\/?$/, '') || '/';
+    url.search = '';
+    url.hash = '';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  }
 }
 
 function resolveLocalApiUrl() {
@@ -52,6 +65,32 @@ function normalizeApiError(error: unknown) {
   return error instanceof Error ? error : new Error('Request failed. Please try again.');
 }
 
+function normalizeResourceUrl(value: string) {
+  if (!value) return value;
+  if (value.startsWith('/uploads/')) return `${API_ORIGIN}${value}`;
+
+  try {
+    const url = new URL(value);
+    const isUpload = url.pathname.startsWith('/uploads/');
+    const isLocalBackend = ['localhost', '127.0.0.1', '0.0.0.0'].includes(url.hostname) && url.port === API_PORT;
+    return isUpload && isLocalBackend ? `${API_ORIGIN}${url.pathname}${url.search}${url.hash}` : value;
+  } catch {
+    return value;
+  }
+}
+
+function normalizeApiPayload<T>(payload: T): T {
+  if (typeof payload === 'string') return normalizeResourceUrl(payload) as T;
+  if (!payload || typeof payload !== 'object') return payload;
+  if (Array.isArray(payload)) return payload.map((item) => normalizeApiPayload(item)) as T;
+
+  const normalized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload as Record<string, unknown>)) {
+    normalized[key] = normalizeApiPayload(value);
+  }
+  return normalized as T;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
@@ -75,7 +114,7 @@ export class ApiService {
       ))) : throwError(() => normalizeApiError(error))),
       tap((event) => { if (event.type === HttpEventType.UploadProgress && event.total) onProgress(Math.round((event.loaded / event.total) * 100)); }),
       filter((event): event is HttpResponse<T> => event.type === HttpEventType.Response),
-      map((event) => event.body as T),
+      map((event) => normalizeApiPayload(event.body as T)),
       catchError((error) => throwError(() => normalizeApiError(error))),
     ));
   }
@@ -92,10 +131,10 @@ export class ApiService {
 
   private rawRequest<T>(baseUrl: string, method: 'get' | 'post' | 'patch' | 'delete', path: string, body?: unknown, token?: string) {
     const options = { headers: this.headers(token) };
-    if (method === 'get') return this.http.get<T>(`${baseUrl}${path}`, options);
-    if (method === 'post') return this.http.post<T>(`${baseUrl}${path}`, body, options);
-    if (method === 'patch') return this.http.patch<T>(`${baseUrl}${path}`, body, options);
-    return this.http.delete<T>(`${baseUrl}${path}`, options);
+    if (method === 'get') return this.http.get<T>(`${baseUrl}${path}`, options).pipe(map((payload) => normalizeApiPayload(payload)));
+    if (method === 'post') return this.http.post<T>(`${baseUrl}${path}`, body, options).pipe(map((payload) => normalizeApiPayload(payload)));
+    if (method === 'patch') return this.http.patch<T>(`${baseUrl}${path}`, body, options).pipe(map((payload) => normalizeApiPayload(payload)));
+    return this.http.delete<T>(`${baseUrl}${path}`, options).pipe(map((payload) => normalizeApiPayload(payload)));
   }
 
   private shouldTryFallback(error: unknown) {

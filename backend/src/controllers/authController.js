@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const Driver = require("../models/Driver");
 const { NIGERIA_PHONE_ERROR, isValidNigeriaPhone, normalizeNigeriaPhone } = require("../utils/nigeriaPhone");
 
@@ -26,6 +27,8 @@ const verifyRefreshToken = (token) => {
   const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "dev-secret-change-me";
   return jwt.verify(token, secret);
 };
+
+const databaseUnavailable = (res) => res.status(503).json({ message: "Database connection is not ready. Please try again in a moment." });
 
 exports.register = async (req, res) => {
   try {
@@ -100,6 +103,8 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) return databaseUnavailable(res);
+
     const { email, phone, contact, password } = req.body;
     const identifier = email || phone || contact;
 
@@ -118,12 +123,15 @@ exports.login = async (req, res) => {
 
     res.json(serializeAuthSession(user));
   } catch (error) {
+    console.error("Login error:", { message: error.message, name: error.name });
     res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.refresh = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) return databaseUnavailable(res);
+
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(401).json({ message: "Please log in again to continue." });
 

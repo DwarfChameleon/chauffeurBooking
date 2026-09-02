@@ -1,6 +1,7 @@
 import { Injectable, NgZone, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
+import { API_ORIGIN } from './api.service';
 
 export type RealtimeEvent =
   | { kind: 'booking'; bookingId: string; status: string; reason: string }
@@ -16,10 +17,7 @@ export class RealtimeService {
   connect(token: string) {
     if (this.socket?.connected) return;
     this.socket?.disconnect();
-    const url = new URL('/api', window.location.origin);
-    url.port = '5000';
-    url.pathname = '';
-    this.socket = io(url.toString().replace(/\/$/, ''), { auth: { token }, transports: ['websocket', 'polling'] });
+    this.socket = io(API_ORIGIN, { auth: { token }, transports: ['websocket', 'polling'] });
     this.socket.on('booking:updated', (event: { bookingId: string; status: string; reason: string }) => this.zone.run(() => this.eventsSubject.next({ kind: 'booking', ...event })));
     this.socket.on('notification:new', (event: { id: string; title: string; body: string; read: boolean }) => this.zone.run(() => this.eventsSubject.next({ kind: 'notification', ...event })));
   }

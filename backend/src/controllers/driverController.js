@@ -4,6 +4,7 @@ const Driver = require('../models/Driver');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const { NIGERIA_PHONE_ERROR, isValidNigeriaPhone, normalizeNigeriaPhone } = require('../utils/nigeriaPhone');
+const { resolveUploadUrl } = require('../utils/uploadStorage');
 const SERVICE_STATES = ['Bayelsa', 'Delta', 'Benin', 'Rivers', 'Calabar', 'Abia', 'Akwa Ibom', 'Edo', 'Abuja', 'Lagos'];
 
 const DOCUMENT_KEYS = ["id", "driversLicense", "proofOfAddress"];
@@ -84,7 +85,7 @@ exports.uploadProfilePicture = async (req, res) => {
     const driver = await findOrCreateDriverProfile(req.user.id);
     if (!driver) return res.status(404).json({ message: 'Driver profile not found' });
 
-    driver.profilePicture = toUploadUrl(req, req.file);
+    driver.profilePicture = await resolveUploadUrl(req, req.file, 'drivers/profile-pictures');
     await driver.save();
 
     const populatedDriver = await Driver.findById(driver._id).populate('user', 'name email phone');
@@ -106,7 +107,7 @@ exports.uploadDriverDocument = async (req, res) => {
     if (!driver) return res.status(404).json({ message: 'Driver profile not found' });
 
     driver.documents = driver.documents || {};
-    driver.documents[documentKey] = { status: 'pending', reference: toUploadUrl(req, req.file) };
+    driver.documents[documentKey] = { status: 'pending', reference: await resolveUploadUrl(req, req.file, `drivers/documents/${documentKey}`) };
     await driver.save();
 
     const populatedDriver = await Driver.findById(driver._id).populate('user', 'name email phone');
@@ -430,13 +431,6 @@ function cleanNumber(value) {
 function cleanOptionalNumber(value) {
   if (value === '' || value === null || value === undefined) return undefined;
   return cleanNumber(value);
-}
-
-function toUploadUrl(req, file) {
-  const normalizedPath = file.path.replace(/\\/g, '/');
-  const uploadIndex = normalizedPath.lastIndexOf('/uploads/');
-  const publicPath = uploadIndex >= 0 ? normalizedPath.slice(uploadIndex) : `/uploads/${file.filename}`;
-  return `${req.protocol}://${req.get('host')}${publicPath}`;
 }
 
 function httpError(status, message) {

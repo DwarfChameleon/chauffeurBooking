@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "check": "node --check src/server.js && node --check src/app.js && node --check src/controllers/authController.js && node --check src/controllers/adminController.js && node --check src/controllers/driverController.js && node --check src/controllers/bookingController.js && node --check src/controllers/employerController.js && node --check src/controllers/locationController.js && node --check src/routes/driverRoutes.js && node --check src/routes/locationRoutes.js && node --check src/utils/locationService.js",
+    "check": "node --check src/server.js && node --check src/app.js && node --check src/controllers/authController.js && node --check src/controllers/adminController.js && node --check src/controllers/driverController.js && node --check src/controllers/bookingController.js && node --check src/controllers/employerController.js && node --check src/controllers/locationController.js && node --check src/routes/driverRoutes.js && node --check src/routes/locationRoutes.js && node --check src/utils/locationService.js && node --check src/utils/uploadStorage.js",
     "test": "npm run check"
   },
   "keywords": [],
@@ -20,6 +20,7 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
