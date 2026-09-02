@@ -1,4 +1,12 @@
 const fs = require("fs/promises");
+
+if (process.env.CLOUDINARY_URL) {
+  process.env.CLOUDINARY_URL = process.env.CLOUDINARY_URL
+    .trim()
+    .replace(/^CLOUDINARY_URL\s*=\s*/i, "")
+    .replace(/^['"]|['"]$/g, "");
+}
+
 const { v2: cloudinary } = require("cloudinary");
 
 const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "bjed-chauffeur";
