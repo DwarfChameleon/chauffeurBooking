@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const LOGIN_AGAIN_MESSAGE = "Please log in again to continue.";
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -14,7 +15,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded; // Attach decoded user info to request
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: LOGIN_AGAIN_MESSAGE, code: "AUTH_EXPIRED" });
   }
 };
 

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpEventType, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, filter, firstValueFrom, lastValueFrom, map, tap, throwError } from 'rxjs';
+import { Observable, catchError, filter, firstValueFrom, lastValueFrom, map, switchMap, tap, throwError } from 'rxjs';
 
 const API_PORT = '5000';
 const API_PATH = '/api';
@@ -8,8 +8,11 @@ const API_URL = resolveApiUrl();
 const FALLBACK_API_URL = resolveFallbackApiUrl(API_URL);
 const OFFLINE_MESSAGE = 'No internet connection. Please check your network and try again.';
 const SERVER_UNREACHABLE_MESSAGE = 'Could not connect to the server. Please check your connection and try again.';
+const LOGIN_AGAIN_MESSAGE = 'Please log in again to continue.';
+const SESSION_STORAGE_KEY = 'verified-dispatch-session';
 
 type RuntimeEnv = { __env?: { apiUrl?: string; fallbackApiUrl?: string } };
+type StoredSession = { token?: string; refreshToken?: string; user?: unknown };
 
 function resolveApiUrl() {
   const configuredUrl = (globalThis as RuntimeEnv).__env?.apiUrl;
@@ -43,6 +46,7 @@ function normalizeApiError(error: unknown) {
   }
   if (error instanceof HttpErrorResponse) {
     const message = typeof error.error?.message === 'string' ? error.error.message : error.message;
+    if (error.status === 401 && /invalid|expired|auth|token/i.test(message)) return new Error(LOGIN_AGAIN_MESSAGE);
     return new Error(message || 'Request failed. Please try again.');
   }
   return error instanceof Error ? error : new Error('Request failed. Please try again.');
@@ -65,7 +69,10 @@ export class ApiService {
     const body = new FormData();
     body.append('file', file);
     return lastValueFrom(this.http.post<T>(`${API_URL}${path}`, body, { headers: this.headers(token), observe: 'events', reportProgress: true }).pipe(
-      catchError((error) => this.shouldTryFallback(error) ? this.http.post<T>(`${FALLBACK_API_URL}${path}`, body, { headers: this.headers(token), observe: 'events', reportProgress: true }) : throwError(() => normalizeApiError(error))),
+      catchError((error) => this.shouldTryFallback(error) ? this.http.post<T>(`${FALLBACK_API_URL}${path}`, body, { headers: this.headers(token), observe: 'events', reportProgress: true }) : throwError(() => error)),
+      catchError((error) => this.shouldRefresh(error, path, token) ? this.refreshSession().pipe(switchMap((session) => this.http.post<T>(`${API_URL}${path}`, body, { headers: this.headers(session.token), observe: 'events', reportProgress: true }).pipe(
+        catchError((retryError) => this.shouldTryFallback(retryError) ? this.http.post<T>(`${FALLBACK_API_URL}${path}`, body, { headers: this.headers(session.token), observe: 'events', reportProgress: true }) : throwError(() => retryError)),
+      ))) : throwError(() => normalizeApiError(error))),
       tap((event) => { if (event.type === HttpEventType.UploadProgress && event.total) onProgress(Math.round((event.loaded / event.total) * 100)); }),
       filter((event): event is HttpResponse<T> => event.type === HttpEventType.Response),
       map((event) => event.body as T),
@@ -75,7 +82,10 @@ export class ApiService {
 
   private request<T>(method: 'get' | 'post' | 'patch' | 'delete', path: string, body?: unknown, token?: string): Observable<T> {
     return this.rawRequest<T>(API_URL, method, path, body, token).pipe(
-      catchError((error) => this.shouldTryFallback(error) ? this.rawRequest<T>(FALLBACK_API_URL, method, path, body, token) : throwError(() => normalizeApiError(error))),
+      catchError((error) => this.shouldTryFallback(error) ? this.rawRequest<T>(FALLBACK_API_URL, method, path, body, token) : throwError(() => error)),
+      catchError((error) => this.shouldRefresh(error, path, token) ? this.refreshSession().pipe(switchMap((session) => this.rawRequest<T>(API_URL, method, path, body, session.token).pipe(
+        catchError((retryError) => this.shouldTryFallback(retryError) ? this.rawRequest<T>(FALLBACK_API_URL, method, path, body, session.token) : throwError(() => retryError)),
+      ))) : throwError(() => normalizeApiError(error))),
       catchError((error) => throwError(() => normalizeApiError(error))),
     );
   }
@@ -90,5 +100,41 @@ export class ApiService {
 
   private shouldTryFallback(error: unknown) {
     return Boolean(FALLBACK_API_URL && isNetworkError(error));
+  }
+
+  private shouldRefresh(error: unknown, path: string, token?: string) {
+    return Boolean(token && error instanceof HttpErrorResponse && error.status === 401 && !path.startsWith('/auth/'));
+  }
+
+  private refreshSession(): Observable<StoredSession & { token: string }> {
+    const stored = this.readSession();
+    if (!stored?.refreshToken) {
+      this.dispatchSessionExpired();
+      return throwError(() => new Error(LOGIN_AGAIN_MESSAGE));
+    }
+    return this.rawRequest<StoredSession & { token: string }>(API_URL, 'post', '/auth/refresh', { refreshToken: stored.refreshToken }).pipe(
+      catchError((error) => this.shouldTryFallback(error) ? this.rawRequest<StoredSession & { token: string }>(FALLBACK_API_URL, 'post', '/auth/refresh', { refreshToken: stored.refreshToken }) : throwError(() => error)),
+      tap((session) => {
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+        window.dispatchEvent(new CustomEvent('session-refreshed'));
+      }),
+      catchError((error) => {
+        this.dispatchSessionExpired();
+        return throwError(() => normalizeApiError(error));
+      }),
+    );
+  }
+
+  private readSession(): StoredSession | null {
+    try {
+      return JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || 'null') as StoredSession | null;
+    } catch {
+      return null;
+    }
+  }
+
+  private dispatchSessionExpired() {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    window.dispatchEvent(new CustomEvent('session-expired'));
   }
 }

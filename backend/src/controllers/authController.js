@@ -8,7 +8,23 @@ const normalizeRole = (role) => (role === "service_user" ? "user" : role);
 
 const signToken = (user) => {
   const secret = process.env.JWT_SECRET || "dev-secret-change-me";
-  return jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: "8h" });
+  return jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "30m" });
+};
+
+const signRefreshToken = (user) => {
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "dev-secret-change-me";
+  return jwt.sign({ id: user._id, role: user.role, type: "refresh" }, secret, { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d" });
+};
+
+const serializeAuthSession = (user) => ({
+  token: signToken(user),
+  refreshToken: signRefreshToken(user),
+  user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role },
+});
+
+const verifyRefreshToken = (token) => {
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "dev-secret-change-me";
+  return jwt.verify(token, secret);
 };
 
 exports.register = async (req, res) => {
@@ -74,12 +90,7 @@ exports.register = async (req, res) => {
       await driver.save();
     }
 
-    const token = signToken(user);
-
-    res.status(201).json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role },
-    });
+    res.status(201).json(serializeAuthSession(user));
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ message: "Server error" });
@@ -105,10 +116,25 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = signToken(user);
-
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role } });
+    res.json(serializeAuthSession(user));
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(401).json({ message: "Please log in again to continue." });
+
+    const decoded = verifyRefreshToken(refreshToken);
+    if (decoded.type !== "refresh") return res.status(401).json({ message: "Please log in again to continue." });
+
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(401).json({ message: "Please log in again to continue." });
+
+    res.json(serializeAuthSession(user));
+  } catch {
+    res.status(401).json({ message: "Please log in again to continue." });
   }
 };
