@@ -56,7 +56,6 @@ type ProfileResponse = { profile: DriverProfile; completeness: Completeness; per
     <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
     <main class="workspace-shell">
       <div class="workspace-header profile-action-row">
-        <button class="back-button" type="button" (click)="attemptExit('/driver/profile')" aria-label="Go back"><ion-icon name="arrow-back-outline"></ion-icon></button>
         <div>
           <p class="eyebrow">Driver Workspace</p>
           <h1>{{ profileGreeting }}</h1>

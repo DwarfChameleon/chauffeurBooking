@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "767649362542",
+    "project_id": "b-jed-chauffeur",
+    "storage_bucket": "b-jed-chauffeur.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767649362542:android:f27ce3da97b45f5930ec7f",
+        "android_client_info": {
+          "package_name": "com.bjed.chauffer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE-gGCqnsT9FgCCJvW6xPDX-1j0ZfU1a0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

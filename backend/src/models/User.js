@@ -8,6 +8,11 @@ const UserSchema = new mongoose.Schema(
     phone: { type: String, trim: true, sparse: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["user", "driver", "admin"], default: "user" },
+    adminLevel: { type: String, enum: ["standard", "super"], default: "standard" },
+    adminStatus: { type: String, enum: ["active", "deactivated"], default: "active" },
+    adminVerified: { type: Boolean, default: false },
+    adminVerifiedAt: { type: Date },
+    adminCreatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     employerProfile: {
       profilePicture: { type: String, trim: true },
       accountType: { type: String, enum: ["personal", "organization", ""], default: "" },

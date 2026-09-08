@@ -9,6 +9,13 @@ export const publicOnlyGuard: CanActivateFn = () => {
   return session ? router.parseUrl(auth.dashboardFor(session.user.role)) : true;
 };
 
+export const adminPublicOnlyGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const session = auth.session();
+  return session?.user.role === 'admin' ? router.parseUrl('/admin/dashboard') : true;
+};
+
 export const signedInGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -35,6 +42,6 @@ export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const session = auth.session();
-  if (!session) return router.parseUrl('/login');
+  if (!session) return router.parseUrl('/admin/login');
   return session.user.role === 'admin' ? true : router.parseUrl(auth.dashboardFor(session.user.role));
 };

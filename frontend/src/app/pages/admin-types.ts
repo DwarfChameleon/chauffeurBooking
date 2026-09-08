@@ -10,6 +10,10 @@ export interface AdminUser {
   email?: string;
   phone?: string;
   role: string;
+  adminLevel?: 'standard' | 'super';
+  adminStatus?: 'active' | 'deactivated';
+  adminVerified?: boolean;
+  adminVerifiedAt?: string;
   employerProfile?: {
     accountType?: string;
     companyName?: string;

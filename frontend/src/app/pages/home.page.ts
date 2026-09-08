@@ -1,8 +1,582 @@
 import { Component } from '@angular/core';
-import { IonButton, IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { IonContent, IonIcon } from '@ionic/angular/standalone';
 
-@Component({ standalone: true, imports: [IonButton, IonContent, IonHeader, IonTitle, IonToolbar, RouterLink], template: `
-<ion-header><ion-toolbar color="primary"><ion-title>Verified Dispatch</ion-title></ion-toolbar></ion-header>
-<ion-content><main class="page-shell"><section class="hero"><p class="eyebrow">Trusted mobility operations</p><h1>Emergency-ready drivers, verified before assignment.</h1><p>Dispatch verified drivers for emergency response, ride-hailing, logistics, chauffeur work, and field-service operations.</p><div class="actions"><ion-button color="light" routerLink="/login">Sign in</ion-button><ion-button fill="outline" color="light" routerLink="/register">Create account</ion-button></div></section><section class="grid" style="margin-top:24px"><article class="card"><h2>Verified supply</h2><p class="muted">Confirm identity, location, and availability before every assignment.</p></article><article class="card"><h2>Fast dispatch</h2><p class="muted">Give operations teams a clear path from request to driver assignment.</p></article><article class="card"><h2>Cross-platform</h2><p class="muted">One Angular and Ionic codebase for web, iOS, and Android.</p></article></section></main></ion-content>` })
-export class HomePage {}
+@Component({
+  standalone: true,
+  imports: [IonContent, IonIcon],
+  template: `
+<ion-content [fullscreen]="true" class="landing-page">
+  <div class="screen">
+    <section class="hero">
+      <div class="topbar">
+        <div class="brand" aria-label="BJED Chauffeur">
+          <img src="assets/images/logo.png" alt="BJED Chauffeur" />
+        </div>
+
+        <button class="profile-btn" type="button" aria-label="Sign in" (click)="goToSignIn($event)">
+          <ion-icon name="person-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="hero-copy">
+        <h1>
+          Verified.
+          <span>Confident.</span>
+          Experienced.
+        </h1>
+
+        <div class="gold-line"></div>
+
+        <div class="trust-row">
+          <div class="trust-item">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <span>Verified</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="trust-item">
+            <ion-icon name="star-outline"></ion-icon>
+            <span>Experienced</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="trust-item">
+            <ion-icon name="lock-closed-outline"></ion-icon>
+            <span>Secure</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-image">
+        <img src="assets/images/chauffeur.png" alt="Professional chauffeur" />
+      </div>
+
+      <div class="city-glow"></div>
+    </section>
+
+    <section class="action-panel">
+      <button class="primary-action" type="button" (click)="goToRegister($event)">
+        <div class="button-icon">
+          <ion-icon name="person-add-outline"></ion-icon>
+        </div>
+
+        <span>CREATE ACCOUNT</span>
+
+        <ion-icon class="arrow" name="arrow-forward-outline"></ion-icon>
+      </button>
+
+      <button class="secondary-action" type="button" (click)="goToSignIn($event)">
+        <div class="button-icon">
+          <ion-icon name="person-outline"></ion-icon>
+        </div>
+
+        <span>SIGN IN</span>
+
+        <ion-icon class="arrow" name="arrow-forward-outline"></ion-icon>
+      </button>
+
+      <div class="service-row">
+        <div class="service-item">
+          <div class="service-icon">
+            <ion-icon name="car-outline"></ion-icon>
+          </div>
+          <span>On-time</span>
+        </div>
+
+        <div class="service-item">
+          <div class="service-icon">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </div>
+          <span>Safe</span>
+        </div>
+
+        <div class="service-item">
+          <div class="service-icon">
+            <ion-icon name="headset-outline"></ion-icon>
+          </div>
+          <span>Support</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</ion-content>
+`,
+  styles: [`
+ion-content::part(scroll) {
+  overflow:hidden;
+}
+
+.screen {
+  width:100%;
+  height:100dvh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:#f8f5ef;
+}
+
+.hero {
+  position:relative;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+  padding:calc(env(safe-area-inset-top) + 10px) 18px 0;
+  color:#07162e;
+  background:
+    radial-gradient(circle at 72% 36%, rgba(191,150,86,.15), transparent 32%),
+    linear-gradient(180deg, #fbf8f3 0%, #f5f0e8 100%);
+}
+
+.hero::before {
+  display:none;
+}
+
+.topbar {
+  position:relative;
+  z-index:12;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:6px 6px 10px;
+  border-radius:18px;
+  background:rgb(248 245 239 / 2%);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+
+.brand {
+  display:flex;
+  align-items:center;
+  color:inherit;
+}
+
+.brand img {
+  display:block;
+  width:104px;
+  max-width:36vw;
+  height:auto;
+  object-fit:contain;
+}
+
+.profile-btn {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  outline: 0;
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+
+  background: linear-gradient(
+    135deg,
+    #c39454,
+    #d8b77a
+  );
+
+  color: #07162e;
+
+  box-shadow: 0 8px 25px rgba(5, 18, 38, 0.08);
+
+  cursor: pointer;
+
+  /* Important for pulse */
+  position: relative;
+  z-index: 1;
+
+  /* Button fade/reveal */
+  animation: profileReveal 0.7s ease-out both;
+}
+
+
+/* Gold pulse ring */
+.profile-btn::before {
+  content: "";
+  position: absolute;
+
+  inset: 0;
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #c39454,
+    #d8b77a
+  );
+
+  z-index: -1;
+
+  animation: profilePulse 2s ease-out infinite;
+}
+
+
+/* Second pulse for a smoother ripple */
+.profile-btn::after {
+  content: "";
+  position: absolute;
+
+  inset: 0;
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #c39454,
+    #d8b77a
+  );
+
+  z-index: -2;
+
+  animation: profilePulse 2s ease-out infinite;
+  animation-delay: 0.7s;
+}
+
+
+/* Fade + reveal when button appears */
+@keyframes profileReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* Expanding fading pulse */
+@keyframes profilePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+
+  70% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+.profile-btn ion-icon {
+  font-size:25px;
+}
+
+.hero-copy {
+  position:relative;
+  z-index:10;
+  margin-top:38px;
+  width:fit-content;
+  max-width:min(68vw, 260px);
+  padding:14px 15px 16px;
+  border:1px solid rgba(255,255,255,.42);
+  border-radius:22px;
+  background:rgba(248,245,239,.52);
+  box-shadow:0 18px 45px rgba(7,22,46,.13);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+}
+
+.hero-copy h1 {
+  margin:0;
+  color:#07162e;
+  font-size:25px;
+  line-height:1.12;
+  font-weight:800;
+  letter-spacing:0;
+}
+
+.hero-copy h1 span {
+  display:block;
+  color:#bf9455;
+}
+
+.gold-line {
+  width:44px;
+  height:3px;
+  margin:22px 0 0;
+  border-radius:20px;
+  background:#bf9455;
+  box-shadow:none;
+}
+
+.trust-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:32px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  backdrop-filter:none;
+}
+
+.trust-item {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#07162e;
+  font-size:initial;
+}
+
+.trust-item ion-icon {
+  font-size:27px;
+  color:#bd9459;
+}
+
+.trust-item span {
+  font-size:11px;
+  font-weight:600;
+}
+
+.divider {
+  width:1px;
+  height:45px;
+  background:rgba(7,22,46,.12);
+}
+
+.hero-image {
+  position:absolute;
+  z-index:4;
+  left:0;
+  right:0;
+  top:0;
+  bottom:-96px;
+  width:100%;
+  height:calc(100% + 96px);
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  pointer-events:none;
+}
+
+.hero-image img {
+  display:block;
+  width:100%;
+  max-width:none;
+  height:100%;
+  object-fit:cover;
+  object-position:center bottom;
+  filter:drop-shadow(0 18px 28px rgba(0,0,0,.2));
+}
+
+.city-glow {
+  position:absolute;
+  z-index:1;
+  right:0;
+  bottom:0;
+  width:65%;
+  height:70%;
+  opacity:.18;
+  background:
+    linear-gradient(to top, rgba(10,35,65,.15), transparent),
+    repeating-linear-gradient(90deg, rgba(7,22,46,.15) 0, rgba(7,22,46,.15) 20px, transparent 20px, transparent 48px);
+  filter:blur(13px);
+}
+
+.action-panel {
+  position:relative;
+  flex:0 0 auto;
+  z-index:15;
+  margin:-34px 0 0;
+  padding:30px 22px calc(env(safe-area-inset-bottom) + 24px);
+  border-radius:34px 34px 0 0;
+  border:0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(26,59,95,.52), transparent 58%),
+    linear-gradient(145deg, #061426, #04111f);
+  box-shadow:0 -20px 45px rgba(4,17,31,.13);
+  backdrop-filter:none;
+  pointer-events:auto;
+}
+
+.primary-action,
+.secondary-action {
+  position:relative;
+  width:100%;
+  height:74px;
+  min-height:74px;
+  border-radius:18px;
+  display:grid;
+  grid-template-columns:48px 1fr 48px;
+  align-items:center;
+  gap:0;
+  padding:0 16px;
+  font-size:17px;
+  font-weight:600;
+  letter-spacing:1px;
+  touch-action:manipulation;
+  cursor:pointer;
+}
+
+.primary-action {
+  border:0;
+  color:#fff;
+  background:linear-gradient(135deg, #c39454, #d8b77a);
+  box-shadow:0 12px 32px rgba(192,147,82,.24);
+}
+
+.secondary-action {
+  margin-top:18px;
+  background:transparent;
+  color:#fff;
+  border:1.5px solid #b9884d;
+  box-shadow:none;
+}
+
+.button-icon {
+  width:auto;
+  height:auto;
+  border-radius:0;
+  display:grid;
+  place-items:center;
+  background:transparent;
+  color:currentColor;
+}
+
+.button-icon ion-icon {
+  font-size:25px;
+}
+
+.secondary-action .button-icon,
+.secondary-action .arrow {
+  color:#bd8f51;
+}
+
+.arrow {
+  justify-self:end;
+  font-size:28px;
+  opacity:1;
+}
+
+.service-row {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  margin-top:28px;
+}
+
+.service-item {
+  min-height:auto;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  color:#fff;
+  font-size:13px;
+  font-weight:500;
+}
+
+.service-icon {
+  width:52px;
+  height:52px;
+  border-radius:15px;
+  display:grid;
+  place-items:center;
+  background:rgba(255,255,255,.055);
+  color:#c49354;
+}
+
+.service-icon ion-icon {
+  font-size:25px;
+}
+
+@media (max-height: 760px) {
+  .hero {
+    padding-top:calc(env(safe-area-inset-top) + 8px);
+  }
+
+  .hero-copy {
+    margin-top:24px;
+  }
+
+  .hero-copy h1 {
+    font-size:25px;
+  }
+
+  .gold-line {
+    margin-top:13px;
+  }
+
+  .trust-row {
+    margin-top:18px;
+  }
+
+  .hero-image {
+    bottom:-104px;
+    height:calc(100% + 104px);
+  }
+
+  .action-panel {
+    margin-top:-30px;
+    padding-top:20px;
+  }
+
+  .primary-action,
+  .secondary-action {
+    height:63px;
+    min-height:63px;
+  }
+
+  .service-row {
+    margin-top:18px;
+  }
+}
+
+@media (min-width: 430px) {
+  .hero {
+    padding-left:24px;
+    padding-right:24px;
+  }
+
+  .action-panel {
+    padding-left:28px;
+    padding-right:28px;
+  }
+}
+
+@media (min-width: 760px) {
+  .screen {
+    width:min(520px, 100%);
+    margin:0 auto;
+    box-shadow:0 0 60px rgba(15,23,42,.12);
+  }
+}
+`]
+})
+export class HomePage {
+  constructor(private readonly router: Router) {}
+
+  goToSignIn(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.router.navigateByUrl('/login', { replaceUrl: true });
+  }
+
+  goToRegister(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.router.navigateByUrl('/register', { replaceUrl: true });
+  }
+}

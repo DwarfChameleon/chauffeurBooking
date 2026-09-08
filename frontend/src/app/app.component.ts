@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, effect, HostListener, inject } from '@angular/core';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { NavigationStart, Router, RouterLink } from '@angular/router';
 import { IonApp, IonBadge, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenu, IonRouterOutlet, IonToolbar, MenuController } from '@ionic/angular/standalone';
 import { ApiService } from './core/api.service';
@@ -13,6 +14,9 @@ import { RealtimeService } from './core/realtime.service';
   imports: [CommonModule, RouterLink, IonApp, IonBadge, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenu, IonRouterOutlet, IonToolbar],
   template: `
 <ion-app>
+  <div class="app-splash" *ngIf="showAngularSplash" aria-label="BJED Chauffeur loading">
+    <img src="assets/images/logo.png" alt="BJED Chauffeur" />
+  </div>
   <ion-menu class="workspace-side-menu" menuId="workspace-menu" contentId="main-content" side="start" [class.driver-menu]="role === 'driver'" [class.employer-menu]="role === 'employer'" [class.admin-menu]="role === 'admin'">
     <ion-header class="workspace-menu-header">
       <ion-toolbar>
@@ -27,6 +31,8 @@ import { RealtimeService } from './core/realtime.service';
         <div class="menu-divider"></div>
         <ng-container *ngIf="role === 'admin'; else workspaceMenu">
           <ion-item button detail="false" routerLink="/admin/dashboard" (click)="closeMenu()"><ion-icon name="grid-outline" slot="start"></ion-icon><ion-label>Dashboard</ion-label></ion-item>
+          <ion-item button detail="false" routerLink="/admin/profile" (click)="closeMenu()"><ion-icon name="person-circle-outline" slot="start"></ion-icon><ion-label>Admin Profile</ion-label></ion-item>
+          <ion-item button detail="false" routerLink="/admin/admins" (click)="closeMenu()"><ion-icon name="shield-half-outline" slot="start"></ion-icon><ion-label>Admin Control</ion-label></ion-item>
           <ion-item button detail="false" routerLink="/admin/users" (click)="closeMenu()"><ion-icon name="people-outline" slot="start"></ion-icon><ion-label>Users</ion-label></ion-item>
           <ion-item button detail="false" routerLink="/admin/employers" (click)="closeMenu()"><ion-icon name="business-outline" slot="start"></ion-icon><ion-label>Employers</ion-label></ion-item>
           <ion-item button detail="false" routerLink="/admin/drivers" (click)="closeMenu()"><ion-icon name="car-sport-outline" slot="start"></ion-icon><ion-label>Drivers</ion-label></ion-item>
@@ -52,7 +58,11 @@ import { RealtimeService } from './core/realtime.service';
 </ion-app>
   `,
   styles: [`
-ion-menu.workspace-side-menu { --menu-bg:#f7f9fc; --menu-text:#172033; --menu-icon:#1954d1; --menu-item-bg:transparent; --menu-divider:#e2e8f0; --menu-header-bg:#0b63ce; --menu-header-text:#fff; }
+.app-splash { position:fixed; inset:0; z-index:99999; display:grid; place-items:center; background:#f8f5ef; pointer-events:none; animation:app-splash-out .28s ease 1.15s forwards; }
+.app-splash img { width:60px; height:60px; object-fit:contain; animation:app-logo-pulse .72s ease-in-out infinite alternate; }
+@keyframes app-logo-pulse { from { width:60px; height:60px; transform:scale(1); opacity:.86; } to { width:80px; height:80px; transform:scale(1.02); opacity:1; } }
+@keyframes app-splash-out { to { opacity:0; visibility:hidden; } }
+ion-menu.workspace-side-menu { --menu-bg:#f7f9fc; --menu-text:#172033; --menu-icon:var(--app-primary); --menu-item-bg:transparent; --menu-divider:#e2e8f0; --menu-header-bg:var(--app-primary); --menu-header-text:#fff; }
 .workspace-menu-header ion-toolbar { --background:var(--menu-header-bg); --color:var(--menu-header-text); --min-height:92px; padding:14px 18px; }
 .menu-brand { display:flex; flex-direction:column; gap:5px; }
 .menu-brand strong { font-size:20px; letter-spacing:-.02em; }
@@ -82,7 +92,7 @@ ion-menu ion-item ion-badge { --background:#ef4444; --color:#fff; font-size:10px
 :host-context(body.dark-theme) ion-menu.employer-menu,
 :host-context(body.dark-theme) ion-menu.admin-menu,
 :host-context(body.driver-dark-theme) ion-menu.driver-menu { --menu-bg:#0d1420; --menu-text:#f8fafc; --menu-icon:#d8b4fe; --menu-item-bg:transparent; --menu-divider:rgba(255,255,255,.12); --menu-header-bg:#0b1424; --menu-header-text:#f8fafc; }
-:host-context(body.driver-light-theme) ion-menu.driver-menu { --menu-bg:#f7f9fc; --menu-text:#172033; --menu-icon:#1954d1; --menu-divider:#e2e8f0; --menu-header-bg:#0b63ce; --menu-header-text:#fff; }
+:host-context(body.driver-light-theme) ion-menu.driver-menu { --menu-bg:#f7f9fc; --menu-text:#172033; --menu-icon:var(--app-primary); --menu-divider:#e2e8f0; --menu-header-bg:var(--app-primary); --menu-header-text:#fff; }
 :host-context(body.driver-light-theme) ion-menu.driver-menu ion-content { --background:var(--menu-bg); }
 :host-context(body.driver-light-theme) ion-menu.driver-menu ion-item { --color:var(--menu-text); }
 :host-context(body.dark-theme) ion-menu.employer-menu .workspace-menu-header ion-toolbar,
@@ -101,10 +111,12 @@ export class AppComponent {
   private readonly router = inject(Router);
   private readonly realtime = inject(RealtimeService);
   notificationCount = 0;
+  showAngularSplash = true;
   private swipeStartX: number | null = null;
   private swipeStartY: number | null = null;
 
   constructor() {
+    this.finishBootSplash();
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) this.blurFocusedElement();
     });
@@ -119,9 +131,17 @@ export class AppComponent {
     });
   }
 
+  private finishBootSplash() {
+    document.getElementById('native-boot-loader')?.remove();
+    window.setTimeout(() => {
+      this.showAngularSplash = false;
+      void SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => undefined);
+    }, 1450);
+  }
+
   get role() { const role = this.auth.session()?.user?.role; return role === 'admin' ? 'admin' : role === 'driver' ? 'driver' : 'employer'; }
   get dashboardPath() { return this.role === 'admin' ? '/admin/dashboard' : this.role === 'driver' ? '/driver/dashboard' : '/employer/dashboard'; }
-  get profilePath() { return this.role === 'admin' ? '/admin/users' : this.role === 'driver' ? '/driver/profile' : '/employer/profile'; }
+  get profilePath() { return this.role === 'admin' ? '/admin/profile' : this.role === 'driver' ? '/driver/profile' : '/employer/profile'; }
   get userEmail() { return this.auth.session()?.user?.email || this.auth.session()?.user?.phone || 'Signed-in account'; }
 
   private async loadNotificationCount(token?: string, userRole?: string) {
@@ -151,7 +171,7 @@ export class AppComponent {
     const path = this.router.url.split('?')[0].split('#')[0];
     const employerPages = ['/employer/dashboard', '/employer/chauffeurs', '/book-driver', '/employer/profile'];
     const driverPages = ['/driver/dashboard', '/driver/bookings', '/driver/earnings', '/driver/profile'];
-    const adminPages = ['/admin/dashboard', '/admin/users', '/admin/drivers', '/admin/bookings', '/admin/verification'];
+    const adminPages = ['/admin/dashboard', '/admin/profile', '/admin/admins', '/admin/users', '/admin/drivers', '/admin/bookings', '/admin/verification'];
     const pages = path.startsWith('/admin/') ? adminPages : path.startsWith('/driver/') ? driverPages : path.startsWith('/employer/') || path === '/book-driver' ? employerPages : [];
     const index = pages.indexOf(path);
     if (index < 0) return;
@@ -170,6 +190,6 @@ export class AppComponent {
 
   private blurFocusedElement() {
     const activeElement = document.activeElement;
-    if (activeElement instanceof HTMLElement) activeElement.blur();
+    if (activeElement instanceof HTMLElement && activeElement.closest('ion-router-outlet')) activeElement.blur();
   }
 }

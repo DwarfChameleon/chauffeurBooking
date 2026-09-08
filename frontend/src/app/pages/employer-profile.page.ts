@@ -32,7 +32,6 @@ type ProfileResponse = { profile: EmployerProfile; completeness: Completeness; s
     <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
     <main class="page-shell">
       <div class="topbar profile-action-row">
-        <button class="icon-button" type="button" (click)="back()" aria-label="Go back"><ion-icon name="arrow-back-outline"></ion-icon></button>
         <div><p class="eyebrow">Employer profile</p><h1>{{ profileGreeting }}</h1></div>
         <div class="topbar-actions"><span *ngIf="saving" class="circular-progress" [style.--progress.%]="saveProgress"><span>{{ saveProgress }}%</span></span><ion-button *ngIf="editing" class="save-button top-save" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors">{{ saving ? 'Saving...' : 'Save' }}</ion-button></div>
       </div>

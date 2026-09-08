@@ -1,8 +1,14 @@
 const express = require("express");
 const auth = require("../middleware/authMiddleware");
 const admin = require("../middleware/adminMiddleware");
+const superAdmin = require("../middleware/superAdminMiddleware");
 const {
   getAllUsers,
+  getProfile,
+  getAdmins,
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
   getOverview,
   deleteUser,
   getAllDrivers,
@@ -17,6 +23,11 @@ const {
 const router = express.Router();
 
 router.get("/overview", auth, admin, getOverview);
+router.get("/profile", auth, admin, getProfile);
+router.get("/admins", auth, admin, getAdmins);
+router.post("/admins", auth, admin, superAdmin, createAdmin);
+router.patch("/admins/:adminId", auth, admin, superAdmin, updateAdmin);
+router.delete("/admins/:adminId", auth, admin, superAdmin, deleteAdmin);
 router.get("/users", auth, admin, getAllUsers);
 router.delete("/users/:userId", auth, admin, deleteUser);
 

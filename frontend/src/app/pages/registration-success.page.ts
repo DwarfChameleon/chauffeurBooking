@@ -1,0 +1,193 @@
+import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { IonButton, IonContent, IonIcon } from '@ionic/angular/standalone';
+
+import { AuthService } from '../core/auth.service';
+
+@Component({
+  standalone: true,
+  imports: [CommonModule, IonButton, IonContent, IonIcon],
+  template: `
+<ion-content [fullscreen]="true" class="success-content">
+  <main class="success-shell">
+    <section class="success-card">
+      <div class="success-icon">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+      </div>
+
+      <p class="eyebrow">Account created</p>
+      <h1>Welcome to B-JED Chauffeur</h1>
+      <p class="message">
+        Your account is ready. Choose the next step that fits what you want to do now.
+      </p>
+
+      <div class="actions" *ngIf="isDriver; else employerActions">
+        <ion-button expand="block" (click)="completeProfile()">
+          <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+          Complete profile
+        </ion-button>
+
+        <ion-button expand="block" fill="outline" (click)="goToDashboard()">
+          <ion-icon name="grid-outline" slot="start"></ion-icon>
+          Go to dashboard
+        </ion-button>
+      </div>
+
+      <ng-template #employerActions>
+        <div class="actions">
+          <ion-button expand="block" (click)="bookChauffeur()">
+            <ion-icon name="car-sport-outline" slot="start"></ion-icon>
+            Book Chauffeur
+          </ion-button>
+
+          <ion-button expand="block" fill="outline" (click)="goToDashboard()">
+            <ion-icon name="grid-outline" slot="start"></ion-icon>
+            Proceed to dashboard
+          </ion-button>
+        </div>
+      </ng-template>
+    </section>
+  </main>
+</ion-content>
+  `,
+  styles: [`
+:host {
+  display:block;
+  --success-primary:var(--app-primary);
+  --success-soft:var(--app-primary-soft);
+  --ink:#07162e;
+  --muted:#667085;
+  --line:#e4e8f0;
+}
+
+.success-content {
+  --background:#f7f9fc;
+}
+
+.success-shell {
+  min-height:100dvh;
+  display:grid;
+  place-items:center;
+  padding:calc(env(safe-area-inset-top) + 24px) 18px calc(env(safe-area-inset-bottom) + 24px);
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(var(--app-primary-rgb), .13), transparent 35%),
+    #f7f9fc;
+}
+
+.success-card {
+  width:min(440px, 100%);
+  padding:28px 22px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  box-shadow:0 18px 45px rgba(7,22,46,.08);
+  text-align:center;
+}
+
+.success-icon {
+  width:76px;
+  height:76px;
+  margin:0 auto 18px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:var(--success-primary);
+  background:var(--success-soft);
+}
+
+.success-icon ion-icon {
+  font-size:42px;
+}
+
+.eyebrow {
+  margin:0 0 8px;
+  color:var(--success-primary);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+h1 {
+  margin:0;
+  color:var(--ink);
+  font-size:28px;
+  line-height:1.08;
+}
+
+.message {
+  margin:12px auto 22px;
+  max-width:330px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.55;
+}
+
+.actions {
+  display:grid;
+  gap:12px;
+}
+
+ion-button {
+  min-height:52px;
+  font-weight:850;
+  text-transform:none;
+  --border-radius:8px;
+  --background:var(--success-primary);
+  --border-color:rgba(var(--app-primary-rgb), .45);
+  --color:#fff;
+}
+
+ion-button[fill="outline"] {
+  --background:transparent;
+  --background-activated:var(--success-soft);
+  --background-focused:var(--success-soft);
+  --background-hover:var(--success-soft);
+  --color:var(--success-primary);
+}
+
+:host-context(body.dark-theme) {
+  --ink:#f8fafc;
+  --muted:#a8b3c7;
+  --line:rgba(255,255,255,.12);
+}
+
+:host-context(body.dark-theme) .success-content {
+  --background:#070b13;
+}
+
+:host-context(body.dark-theme) .success-shell {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(var(--app-primary-rgb), .15), transparent 36%),
+    #070b13;
+}
+
+:host-context(body.dark-theme) .success-card {
+  background:#0d1420;
+  border-color:var(--line);
+  box-shadow:0 18px 45px rgba(0,0,0,.28);
+}
+  `],
+})
+export class RegistrationSuccessPage {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  get isDriver() {
+    return this.auth.session()?.user.role === 'driver';
+  }
+
+  completeProfile() {
+    void this.router.navigateByUrl('/driver/profile/edit');
+  }
+
+  bookChauffeur() {
+    void this.router.navigateByUrl('/book-driver');
+  }
+
+  goToDashboard() {
+    void this.router.navigateByUrl(this.auth.dashboardFor(this.auth.session()?.user.role));
+  }
+}

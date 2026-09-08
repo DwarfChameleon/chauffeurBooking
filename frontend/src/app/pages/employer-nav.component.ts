@@ -23,7 +23,7 @@ type EmployerTab = 'dashboard' | 'chauffeurs' | 'bookings' | 'profile';
 .bottom-nav { display:flex; align-items:center; justify-content:center; gap:8px; min-height:72px; border-top:1px solid #e7edf5; background:#fff; padding:5px max(10px, env(safe-area-inset-left)) max(7px, env(safe-area-inset-bottom)); }
 .nav-item { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:112px; min-height:54px; border:0; border-radius:8px; background:transparent; color:#728096; font:inherit; font-size:10px; font-weight:800; cursor:pointer; }
 .nav-item ion-icon { font-size:22px; }
-.nav-item.active { color:#1954d1; background:#edf3ff; }
+.nav-item.active { color:var(--app-primary); background:rgba(var(--app-primary-rgb),.12); }
 @media (max-width:620px) { .bottom-nav { justify-content:space-around; gap:4px; } .nav-item { min-width:0; flex:1; } }
   `],
 })

@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 
-export interface SessionUser { id?: string; name?: string; email?: string; phone?: string; role?: string; }
+export interface SessionUser { id?: string; name?: string; email?: string; phone?: string; role?: string; adminLevel?: string; adminStatus?: string; }
 export interface Session { token: string; refreshToken?: string; user: SessionUser; }
 
 @Injectable({ providedIn: 'root' })
@@ -14,7 +14,10 @@ export class AuthService {
     window.addEventListener('session-expired', () => this.expireSession());
   }
   async login(contact: string, password: string) { const result = await this.api.post<Session>('/auth/login', { email: contact, password }); this.save(result); return result; }
+  async adminLogin(contact: string, password: string) { const result = await this.api.post<Session>('/administrator/login', { contact, password }); this.save(result); return result; }
   async register(data: Record<string, unknown>) { const result = await this.api.post<Session>('/auth/register', data); this.save(result); return result; }
+  verifyForgotPassword(data: { email: string; phone: string; emergencyContactPhone: string }) { return this.api.post<{ resetToken: string; message: string }>('/auth/forgot-password/verify', data); }
+  resetForgotPassword(data: { resetToken: string; password: string }) { return this.api.post<{ message: string }>('/auth/forgot-password/reset', data); }
   logout() { localStorage.removeItem(this.storageKey); this.session.set(null); void this.router.navigateByUrl('/'); }
   dashboardFor(role?: string) { return role === 'admin' ? '/admin/dashboard' : role === 'driver' ? '/driver/dashboard' : '/employer/dashboard'; }
   private expireSession() {

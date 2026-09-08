@@ -47,16 +47,16 @@ type WorkspaceRole = 'driver' | 'employer' | 'admin';
 .workspace-mobile-header { box-shadow:0 6px 18px rgba(15,23,42,.06); }
 ion-toolbar { --min-height:56px; --padding-start:4px; --padding-end:4px; --background:rgba(255,255,255,.96); --color:#172033; --border-color:#e6ebf2; }
 ion-title { padding-inline:6px; font-size:17px; font-weight:900; letter-spacing:-.02em; }
-.toolbar-icon { position:relative; width:40px; height:40px; margin:0 1px; --padding-start:0; --padding-end:0; --border-radius:50%; --color:#1954d1; --background:rgba(25,84,209,.1); }
+.toolbar-icon { position:relative; width:40px; height:40px; margin:0 1px; --padding-start:0; --padding-end:0; --border-radius:50%; --color:var(--app-primary); --background:rgba(var(--app-primary-rgb),.12); }
 .toolbar-icon ion-icon { font-size:20px; color:currentColor; }
 .notification-action ion-badge { position:absolute; top:2px; right:0; min-width:17px; height:17px; padding:0 4px; display:grid; place-items:center; --background:#ef4444; --color:#fff; border-radius:999px; font-size:10px; font-weight:900; }
 .signout-action { --color:#7c3aed; --background:rgba(124,58,237,.14); }
 :host-context(body.dark-theme) .workspace-mobile-header:not(.driver-toolbar) ion-toolbar,
 :host-context(body.driver-dark-theme) .driver-toolbar ion-toolbar { --background:rgba(8,13,21,.96); --color:#f8fafc; --border-color:rgba(255,255,255,.1); }
 :host-context(body.dark-theme) .workspace-mobile-header:not(.driver-toolbar) .toolbar-icon,
-:host-context(body.driver-dark-theme) .driver-toolbar .toolbar-icon { --color:#d8b4fe; --background:rgba(124,58,237,.18); }
+:host-context(body.driver-dark-theme) .driver-toolbar .toolbar-icon { --color:var(--app-primary-tint); --background:rgba(var(--app-primary-rgb),.18); }
 :host-context(body.driver-light-theme) .driver-toolbar ion-toolbar { --background:rgba(255,255,255,.98); --color:#172033; --border-color:#dbe5f2; }
-:host-context(body.driver-light-theme) .driver-toolbar .toolbar-icon { --color:#1954d1; --background:rgba(25,84,209,.12); }
+:host-context(body.driver-light-theme) .driver-toolbar .toolbar-icon { --color:var(--app-primary); --background:rgba(var(--app-primary-rgb),.12); }
   `],
 })
 export class WorkspaceHeaderComponent {

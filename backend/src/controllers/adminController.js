@@ -1,13 +1,18 @@
 const User = require("../models/User");
 const Driver = require("../models/Driver");
 const Booking = require("../models/Booking");
+const bcrypt = require("bcryptjs");
 const { createNotification, emitBookingUpdate } = require("../utils/realtime");
+const { serializeAdminProfile } = require("../administrator/workspace");
+const { NIGERIA_PHONE_ERROR, isValidNigeriaPhone, normalizeNigeriaPhone } = require("../utils/nigeriaPhone");
 
 const DOCUMENT_KEYS = ["id", "driversLicense", "proofOfAddress"];
 const EMPLOYER_DOCUMENT_KEYS = ["id", "proofOfAddress"];
 const DOCUMENT_STATUSES = ["missing", "pending", "verified", "rejected"];
 const ACTIVE_BOOKING_STATUSES = ["requested", "assigned", "accepted", "started", "arrived"];
 const LIVE_TRIP_STATUSES = ["started", "arrived"];
+const ADMIN_STATUSES = ["active", "deactivated"];
+const ADMIN_LEVELS = ["standard", "super"];
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -15,6 +20,117 @@ exports.getAllUsers = async (req, res) => {
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: "Failed to get users" });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user || user.role !== "admin") return res.status(404).json({ message: "Admin profile not found" });
+    res.json({ profile: serializeAdminProfile(user) });
+  } catch (err) {
+    console.error("Admin profile failed:", err.message);
+    res.status(500).json({ message: "Failed to load admin profile" });
+  }
+};
+
+exports.getAdmins = async (req, res) => {
+  try {
+    const admins = await User.find({ role: "admin" }).select("-password").sort({ adminLevel: -1, createdAt: -1 });
+    res.json({ admins: admins.map(serializeAdminUser), canManageAdmins: req.admin?.adminLevel === "super" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load admins" });
+  }
+};
+
+exports.createAdmin = async (req, res) => {
+  try {
+    const { name, email, phone, password, adminLevel = "standard" } = req.body;
+    const cleanEmail = cleanString(email).toLowerCase();
+    const cleanPhone = normalizeNigeriaPhone(phone);
+    if (!name || (!cleanEmail && !cleanPhone)) return res.status(400).json({ message: "Admin name and email or phone are required" });
+    if (cleanPhone && !isValidNigeriaPhone(cleanPhone)) return res.status(400).json({ message: NIGERIA_PHONE_ERROR });
+    if (!password || password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
+    if (!ADMIN_LEVELS.includes(adminLevel)) return res.status(400).json({ message: "Invalid admin level" });
+
+    const duplicateConditions = [];
+    if (cleanEmail) duplicateConditions.push({ email: cleanEmail });
+    if (cleanPhone) duplicateConditions.push({ phone: cleanPhone });
+    const existing = duplicateConditions.length ? await User.findOne({ $or: duplicateConditions }) : null;
+    if (existing) return res.status(400).json({ message: "An account with this email or phone already exists" });
+
+    const admin = await User.create({
+      name: cleanString(name),
+      email: cleanEmail || undefined,
+      phone: cleanPhone || undefined,
+      password: await bcrypt.hash(password, 10),
+      role: "admin",
+      adminLevel,
+      adminStatus: "active",
+      adminVerified: true,
+      adminVerifiedAt: new Date(),
+      adminCreatedBy: req.user.id,
+    });
+    res.status(201).json({ admin: serializeAdminUser(admin) });
+  } catch (err) {
+    console.error("Create admin failed:", err.message);
+    res.status(500).json({ message: "Failed to create admin" });
+  }
+};
+
+exports.updateAdmin = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { adminLevel, adminStatus, adminVerified, role } = req.body;
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== "admin") return res.status(404).json({ message: "Admin not found" });
+
+    const isSelf = String(admin._id) === String(req.user.id);
+    if (isSelf && (adminLevel === "standard" || adminStatus === "deactivated" || role !== undefined)) {
+      return res.status(400).json({ message: "You cannot demote, deactivate, or change the role of your own admin account" });
+    }
+
+    if (adminLevel !== undefined) {
+      if (!ADMIN_LEVELS.includes(adminLevel)) return res.status(400).json({ message: "Invalid admin level" });
+      admin.adminLevel = adminLevel;
+    }
+    if (adminStatus !== undefined) {
+      if (!ADMIN_STATUSES.includes(adminStatus)) return res.status(400).json({ message: "Invalid admin status" });
+      admin.adminStatus = adminStatus;
+    }
+    if (adminVerified !== undefined) {
+      admin.adminVerified = Boolean(adminVerified);
+      admin.adminVerifiedAt = admin.adminVerified ? new Date() : undefined;
+      if (admin.adminVerified) admin.adminStatus = "active";
+    }
+    if (role !== undefined) {
+      if (!["user", "driver", "admin"].includes(role)) return res.status(400).json({ message: "Invalid role" });
+      admin.role = role;
+      if (role !== "admin") {
+        admin.adminLevel = "standard";
+        admin.adminStatus = "active";
+        admin.adminVerified = false;
+        admin.adminVerifiedAt = undefined;
+      }
+    }
+
+    await admin.save();
+    res.json({ admin: serializeAdminUser(admin) });
+  } catch (err) {
+    console.error("Update admin failed:", err.message);
+    res.status(500).json({ message: "Failed to update admin" });
+  }
+};
+
+exports.deleteAdmin = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    if (String(adminId) === String(req.user.id)) return res.status(400).json({ message: "You cannot delete your own admin account" });
+    const admin = await User.findOneAndDelete({ _id: adminId, role: "admin" });
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+    res.json({ message: "Admin deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete admin" });
   }
 };
 
@@ -61,6 +177,12 @@ exports.getOverview = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.role === "admin") {
+      if (req.admin?.adminLevel !== "super") return res.status(403).json({ message: "Only a super admin can delete an admin account" });
+      if (String(user._id) === String(req.user.id)) return res.status(400).json({ message: "You cannot delete your own admin account" });
+    }
     await User.findByIdAndDelete(userId);
     res.json({ message: "User deleted" });
   } catch (err) {
@@ -224,7 +346,27 @@ function serializeUser(user) {
     email: user.email || "",
     phone: user.phone || "",
     role: user.role,
+    adminLevel: user.adminLevel || "standard",
+    adminStatus: user.adminStatus || "active",
+    adminVerified: Boolean(user.adminVerified),
     employerProfile: user.employerProfile || {},
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
+function serializeAdminUser(user) {
+  return {
+    _id: user._id,
+    name: user.name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    role: user.role,
+    adminLevel: user.adminLevel || "standard",
+    adminStatus: user.adminStatus || "active",
+    adminVerified: Boolean(user.adminVerified),
+    adminVerifiedAt: user.adminVerifiedAt,
+    adminCreatedBy: user.adminCreatedBy,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -328,4 +470,8 @@ function buildDirectionsUrl(from, to) {
   const origin = `${from.latitude},${from.longitude}`;
   const destination = `${to.latitude},${to.longitude}`;
   return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+}
+
+function cleanString(value) {
+  return typeof value === "string" ? value.trim() : "";
 }

@@ -1,5 +1,26 @@
 <!doctype html>
 <html lang="en">
   <head><meta charset="utf-8"><title>BJED Chauffeur</title><base href="/"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="env.js"></script></head>
-  <body><app-root></app-root></body>
+  <body>
+    <div id="native-boot-loader" aria-label="BJED Chauffeur loading">
+      <img src="assets/images/logo.png" alt="BJED Chauffeur" />
+    </div>
+    <style>
+      #native-boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        display: grid;
+        place-items: center;
+        background: #f8f5ef;
+      }
+
+      #native-boot-loader img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+      }
+    </style>
+    <app-root></app-root>
+  </body>
 </html>

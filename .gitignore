@@ -16,3 +16,10 @@ server-runtime.*.log
 
 .DS_Store
 Thumbs.db
+
+# Android production signing
+keystore/
+*.jks
+*.keystore
+android/keystore.properties
+**/keystore.properties

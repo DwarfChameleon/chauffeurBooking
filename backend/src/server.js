@@ -8,11 +8,13 @@ const authRoutes = require("./routes/authRoutes");
 const driverRoutes = require("./routes/driverRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const administratorRoutes = require("./routes/administratorRoutes");
 const employerRoutes = require("./routes/employerRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const { configureRealtime } = require("./utils/realtime");
 const uploadStorage = require("./utils/uploadStorage");
+const firebaseAdmin = require("./utils/firebaseAdmin");
 
 const app = express();
 const server = http.createServer(app);
@@ -85,6 +87,10 @@ app.get("/api/health", (req, res) => {
       cloudName: uploadStorage.configuredCloudName(),
       fallback: uploadStorage.isCloudinaryConfigured() ? "disabled_when_configured" : "local_uploads",
     },
+    firebaseAdmin: {
+      configured: firebaseAdmin.isFirebaseAdminConfigured(),
+      missing: firebaseAdmin.missingFirebaseAdminEnv(),
+    },
     timestamp: new Date().toISOString(),
   });
 });
@@ -92,6 +98,7 @@ app.use("/api/drivers", driverRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/administrator", administratorRoutes);
 app.use("/api/employers", employerRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/locations", locationRoutes);

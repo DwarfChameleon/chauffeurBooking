@@ -17,18 +17,52 @@
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/assets", { "glob": "env.js", "input": "src", "output": "/" }],
+            "assets": [
+              "src/assets",
+              {
+                "glob": "env.js",
+                "input": "src",
+                "output": "/"
+              }
+            ],
             "styles": ["src/global.scss"],
             "allowedCommonJsDependencies": ["leaflet"],
-            "scripts": []
+            "scripts": [],
+            "optimization": {
+              "fonts": false
+            }
           },
           "configurations": {
-            "production": { "budgets": [{ "type": "initial", "maximumWarning": "2mb", "maximumError": "5mb" }], "outputHashing": "all" },
-            "development": { "optimization": false, "extractLicenses": false, "sourceMap": true }
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
           },
           "defaultConfiguration": "production"
         },
-        "serve": { "builder": "@angular-devkit/build-angular:dev-server", "configurations": { "production": { "buildTarget": "verified-dispatch:build:production" }, "development": { "buildTarget": "verified-dispatch:build:development" } }, "defaultConfiguration": "development" }
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "verified-dispatch:build:production"
+            },
+            "development": {
+              "buildTarget": "verified-dispatch:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        }
       }
     }
   },

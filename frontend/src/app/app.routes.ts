@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
-import { adminGuard, driverGuard, employerGuard, publicOnlyGuard } from './core/auth.guard';
+import { adminGuard, adminPublicOnlyGuard, driverGuard, employerGuard, publicOnlyGuard, signedInGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   { path: '', canActivate: [publicOnlyGuard], loadComponent: () => import('./pages/home.page').then((m) => m.HomePage) },
   { path: 'login', canActivate: [publicOnlyGuard], loadComponent: () => import('./pages/login.page').then((m) => m.LoginPage) },
+  { path: 'forgot-password', canActivate: [publicOnlyGuard], loadComponent: () => import('./pages/forgot-password.page').then((m) => m.ForgotPasswordPage) },
   { path: 'register', canActivate: [publicOnlyGuard], loadComponent: () => import('./pages/register.page').then((m) => m.RegisterPage) },
+  { path: 'registration-success', canActivate: [signedInGuard], loadComponent: () => import('./pages/registration-success.page').then((m) => m.RegistrationSuccessPage) },
   { path: 'book-driver', canActivate: [employerGuard], loadComponent: () => import('./pages/book-driver.page').then((m) => m.BookDriverPage) },
   { path: 'employer', redirectTo: 'employer/dashboard', pathMatch: 'full' },
   { path: 'employer/dashboard', canActivate: [employerGuard], loadComponent: () => import('./pages/employer-dashboard.page').then((m) => m.EmployerDashboardPage) },
@@ -19,8 +21,11 @@ export const routes: Routes = [
   { path: 'driver/profile', canActivate: [driverGuard], loadComponent: () => import('./pages/driver-profile.page').then((m) => m.DriverProfilePage) },
   { path: 'driver/profile/edit', canActivate: [driverGuard], loadComponent: () => import('./pages/driver-profile.page').then((m) => m.DriverProfilePage) },
   { path: 'driver/notifications', canActivate: [driverGuard], loadComponent: () => import('./pages/notifications.page').then((m) => m.NotificationsPage) },
+  { path: 'admin/login', canActivate: [adminPublicOnlyGuard], loadComponent: () => import('./pages/admin-login.page').then((m) => m.AdminLoginPage) },
   { path: 'admin', redirectTo: 'admin/dashboard', pathMatch: 'full' },
   { path: 'admin/dashboard', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-dashboard.page').then((m) => m.AdminDashboardPage) },
+  { path: 'admin/profile', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-profile.page').then((m) => m.AdminProfilePage) },
+  { path: 'admin/admins', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-admins.page').then((m) => m.AdminAdminsPage) },
   { path: 'admin/users', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-users.page').then((m) => m.AdminUsersPage) },
   { path: 'admin/employers', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-employers.page').then((m) => m.AdminEmployersPage) },
   { path: 'admin/drivers', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-drivers.page').then((m) => m.AdminDriversPage) },

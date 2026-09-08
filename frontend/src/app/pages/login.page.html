@@ -1,0 +1,273 @@
+   <ion-content [fullscreen]="true" class="login-content">
+
+      <main class="login-screen">
+
+        <!-- =========================
+             HERO
+        ========================== -->
+        <section class="hero">
+
+          <!-- back button -->
+          <button
+            type="button"
+            class="back-btn"
+            aria-label="Go back"
+            (click)="back()"
+          >
+            <ion-icon name="arrow-back-outline"></ion-icon>
+          </button>
+
+          <img
+            src="assets/images/logo.png"
+            alt="B-JED Chauffeur"
+            class="top-logo"
+          />
+
+
+          <!-- Logo -->
+       
+
+          <!-- Chauffeur Image -->
+          <div class="chauffeur-image">
+
+            <img
+              src="assets/images/chauffeur.png"
+              alt="Professional chauffeur"
+            />
+
+          </div>
+
+
+          <!-- curved white heading panel -->
+          <div class="hero-curve">
+            <div class="heading">
+
+              <h1>Welcome back</h1>
+
+              <p>
+                Sign in to continue
+              </p>
+
+              <span class="gold-line"></span>
+
+            </div>
+          </div>
+
+        
+
+        </section>
+
+
+        <!-- =========================
+             LOGIN FORM
+        ========================== -->
+        <section class="form-section">
+
+          <!-- EMAIL / PHONE -->
+          <div class="field-group">
+
+            <label>
+              Email or Phone
+            </label>
+
+            <div
+              class="input-wrapper"
+              [class.input-error]="error"
+            >
+
+              <ion-icon
+                name="person-outline"
+                class="field-icon">
+              </ion-icon>
+
+              <ion-input
+                [(ngModel)]="contact"
+                name="contact"
+                autocomplete="username"
+                inputmode="text"
+                placeholder="Enter email or phone number"
+                class="custom-input">
+              </ion-input>
+
+            </div>
+
+          </div>
+
+
+          <!-- PASSWORD -->
+          <div class="field-group">
+
+            <label>
+              Password
+            </label>
+
+            <div
+              class="input-wrapper"
+              [class.input-error]="error"
+            >
+
+              <ion-icon
+                name="lock-closed-outline"
+                class="field-icon">
+              </ion-icon>
+
+              <ion-input
+                [(ngModel)]="password"
+                name="password"
+                [type]="showPassword ? 'text' : 'password'"
+                autocomplete="current-password"
+                placeholder="Enter password"
+                class="custom-input">
+              </ion-input>
+
+
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePassword()"
+                aria-label="Toggle password visibility"
+              >
+
+                <ion-icon
+                  [name]="
+                    showPassword
+                      ? 'eye-outline'
+                      : 'eye-off-outline'
+                  ">
+                </ion-icon>
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <!-- forgot password -->
+          <div class="forgot-row">
+
+            <button
+                type="button"
+                class="forgot-btn"
+                (click)="forgotPassword()"
+            >
+              Forgot password?
+            </button>
+
+          </div>
+
+
+          <!-- ERROR -->
+          <div
+            class="error-box"
+            *ngIf="error"
+          >
+
+            <ion-icon
+              name="alert-circle-outline">
+            </ion-icon>
+
+            <ion-note color="danger">
+              {{ error }}
+            </ion-note>
+
+          </div>
+
+
+          <!-- SIGN IN -->
+          <ion-button
+            expand="block"
+            class="signin-btn"
+            [disabled]="busy"
+            (click)="submit()"
+          >
+
+            <ng-container *ngIf="!busy">
+
+              <span>
+                Sign In
+              </span>
+
+              <ion-icon
+                name="arrow-forward-outline"
+                slot="end">
+              </ion-icon>
+
+            </ng-container>
+
+
+            <ng-container *ngIf="busy">
+
+              <ion-spinner
+                name="crescent">
+              </ion-spinner>
+
+              <span>
+                Signing in...
+              </span>
+
+            </ng-container>
+
+          </ion-button>
+
+
+          <!-- divider -->
+          <div class="divider">
+
+            <span></span>
+
+            <p>
+              OR
+            </p>
+
+            <span></span>
+
+          </div>
+
+
+          <!-- GOOGLE SIGN IN -->
+          <button
+            type="button"
+            class="google-btn"
+            [disabled]="googleBusy"
+            (click)="googleSignIn()"
+          >
+
+            <ion-spinner
+              *ngIf="googleBusy"
+              name="crescent">
+            </ion-spinner>
+
+            <ion-icon
+              *ngIf="!googleBusy"
+              name="logo-google"
+              class="google-icon">
+            </ion-icon>
+
+            <span>
+              {{
+                googleBusy
+                  ? 'Connecting...'
+                  : 'Continue with Google'
+              }}
+            </span>
+
+          </button>
+
+
+          <!-- REGISTER -->
+          <p class="register-text">
+
+            New to the network?
+
+            <a routerLink="/register">
+              Create an account
+            </a>
+
+          </p>
+
+        </section>
+
+      </main>
+
+    </ion-content>
