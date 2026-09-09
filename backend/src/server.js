@@ -12,6 +12,7 @@ const administratorRoutes = require("./routes/administratorRoutes");
 const employerRoutes = require("./routes/employerRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const locationRoutes = require("./routes/locationRoutes");
+const supportRoutes = require("./routes/supportRoutes");
 const { configureRealtime } = require("./utils/realtime");
 const uploadStorage = require("./utils/uploadStorage");
 const firebaseAdmin = require("./utils/firebaseAdmin");
@@ -102,6 +103,7 @@ app.use("/api/administrator", administratorRoutes);
 app.use("/api/employers", employerRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/locations", locationRoutes);
+app.use("/api/support", supportRoutes);
 
 // Start server
 configureRealtime(server);

@@ -6,7 +6,7 @@ import { IonApp, IonBadge, IonContent, IonHeader, IonIcon, IonItem, IonLabel, Io
 import { ApiService } from './core/api.service';
 import { AuthService } from './core/auth.service';
 import { ThemeService } from './core/theme.service';
-import { RealtimeService } from './core/realtime.service';
+import { LiveCallSession, RealtimeService } from './core/realtime.service';
 
 @Component({
   selector: 'app-root',
@@ -39,11 +39,13 @@ import { RealtimeService } from './core/realtime.service';
           <ion-item button detail="false" routerLink="/admin/bookings" (click)="closeMenu()"><ion-icon name="calendar-outline" slot="start"></ion-icon><ion-label>Bookings</ion-label></ion-item>
           <ion-item button detail="false" routerLink="/admin/verification" (click)="closeMenu()"><ion-icon name="shield-checkmark-outline" slot="start"></ion-icon><ion-label>Verification</ion-label></ion-item>
           <ion-item button detail="false" routerLink="/admin/notifications" (click)="closeMenu()"><ion-icon name="notifications-outline" slot="start"></ion-icon><ion-label>Notifications</ion-label><ion-badge slot="end" *ngIf="notificationCount > 0">{{ notificationCount }}</ion-badge></ion-item>
+          <ion-item button detail="false" routerLink="/support" (click)="closeMenu()"><ion-icon name="help-circle-outline" slot="start"></ion-icon><ion-label>Support</ion-label></ion-item>
+          <ion-item button detail="false" routerLink="/settings" (click)="closeMenu()"><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item>
         </ng-container>
         <ng-template #workspaceMenu>
-        <ion-item button detail="false" (click)="closeMenu()"><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item>
+        <ion-item button detail="false" routerLink="/settings" (click)="closeMenu()"><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item>
         <ion-item button detail="false" [routerLink]="profilePath" (click)="closeMenu()"><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>My Profile</ion-label></ion-item>
-        <ion-item button detail="false" (click)="closeMenu()"><ion-icon name="help-circle-outline" slot="start"></ion-icon><ion-label>Support</ion-label></ion-item>
+        <ion-item button detail="false" routerLink="/support" (click)="closeMenu()"><ion-icon name="help-circle-outline" slot="start"></ion-icon><ion-label>Support</ion-label></ion-item>
         <ion-item button detail="false" (click)="closeMenu()"><ion-icon name="information-circle-outline" slot="start"></ion-icon><ion-label>About</ion-label></ion-item>
         <ion-item button detail="false" (click)="closeMenu()"><ion-icon name="document-text-outline" slot="start"></ion-icon><ion-label>Terms and Conditions</ion-label></ion-item>
         <ion-item button detail="false" (click)="closeMenu()"><ion-icon name="shield-checkmark-outline" slot="start"></ion-icon><ion-label>Privacy policy</ion-label></ion-item>
@@ -55,6 +57,25 @@ import { RealtimeService } from './core/realtime.service';
     </ion-content>
   </ion-menu>
   <ion-router-outlet id="main-content" />
+  <div class="call-backdrop" *ngIf="incomingCall || activeCall">
+    <section class="call-card incoming" *ngIf="incomingCall as call">
+      <span class="call-icon"><ion-icon name="call-outline"></ion-icon></span>
+      <p class="call-eyebrow">{{ call.target === 'conference' ? 'Conference call' : call.target === 'support' ? 'Support call' : 'Watchtower call' }}</p>
+      <h2>{{ call.callerName }}</h2>
+      <p>{{ call.bookingLabel }}</p>
+      <div class="call-actions">
+        <button class="decline" type="button" (click)="answerCall(false)">Decline</button>
+        <button class="accept" type="button" (click)="answerCall(true)">Accept</button>
+      </div>
+    </section>
+    <section class="call-card active" *ngIf="!incomingCall && activeCall as call">
+      <span class="call-icon connected"><ion-icon name="call-outline"></ion-icon></span>
+      <p class="call-eyebrow">{{ callStatus }}</p>
+      <h2>{{ call.target === 'conference' ? 'Conference call' : call.target === 'support' ? 'Support call' : 'Live booking call' }}</h2>
+      <p>{{ call.bookingLabel }}</p>
+      <button class="decline wide" type="button" (click)="endActiveCall()">End call</button>
+    </section>
+  </div>
 </ion-app>
   `,
   styles: [`
@@ -101,6 +122,26 @@ ion-menu ion-item ion-badge { --background:#ef4444; --color:#fff; font-size:10px
 :host-context(body.driver-light-theme) ion-menu.driver-menu .workspace-menu-header ion-toolbar,
 :host-context(body:not(.dark-theme)) ion-menu.employer-menu .workspace-menu-header ion-toolbar,
 :host-context(body:not(.dark-theme)) ion-menu.admin-menu .workspace-menu-header ion-toolbar { --background:var(--menu-header-bg); --color:var(--menu-header-text); }
+.call-backdrop { position:fixed; inset:0; z-index:100000; display:grid; place-items:end center; padding:18px; background:rgba(5,11,22,.42); backdrop-filter:blur(5px); }
+.call-card { width:min(420px,100%); box-sizing:border-box; padding:20px; border-radius:14px; background:#fff; color:#101828; box-shadow:0 24px 70px rgba(2,8,23,.28); text-align:center; }
+.call-icon { width:62px; height:62px; margin:0 auto 12px; display:grid; place-items:center; border-radius:50%; color:#fff; background:#16a34a; box-shadow:0 0 0 10px rgba(22,163,74,.12); animation:call-pulse 1s ease-in-out infinite alternate; }
+.call-icon.connected { animation:none; background:#1954d1; box-shadow:0 0 0 10px rgba(25,84,209,.12); }
+.call-icon ion-icon { font-size:30px; }
+.call-eyebrow { margin:0 0 6px; color:#c39454; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.12em; }
+.call-card h2 { margin:0 0 6px; color:#101828; font-size:23px; font-weight:900; letter-spacing:0; }
+.call-card p { margin:0 0 16px; color:#667085; font-size:13px; line-height:1.4; }
+.call-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.call-card button { min-height:48px; border:0; border-radius:8px; font:inherit; font-size:14px; font-weight:900; cursor:pointer; }
+.call-card .decline { background:#fee2e2; color:#b42318; }
+.call-card .accept { background:#16a34a; color:#fff; }
+.call-card .wide { width:100%; }
+@keyframes call-pulse { from { transform:scale(.98); } to { transform:scale(1.04); } }
+:host-context(body.dark-theme) .call-card,
+:host-context(body.driver-dark-theme) .call-card { background:#0d1420; color:#f8fafc; }
+:host-context(body.dark-theme) .call-card h2,
+:host-context(body.driver-dark-theme) .call-card h2 { color:#f8fafc; }
+:host-context(body.dark-theme) .call-card p,
+:host-context(body.driver-dark-theme) .call-card p { color:#b7c0cf; }
   `],
 })
 export class AppComponent {
@@ -112,6 +153,9 @@ export class AppComponent {
   private readonly realtime = inject(RealtimeService);
   notificationCount = 0;
   showAngularSplash = true;
+  incomingCall: LiveCallSession | null = null;
+  activeCall: LiveCallSession | null = null;
+  callStatus = 'Ringing';
   private swipeStartX: number | null = null;
   private swipeStartY: number | null = null;
 
@@ -127,6 +171,10 @@ export class AppComponent {
     });
     this.realtime.events$.subscribe((event) => {
       if (event.kind === 'notification') this.notificationCount += 1;
+      if (event.kind === 'call-ring') this.incomingCall = event.call;
+      if (event.kind === 'call-started') { this.activeCall = event.call; this.callStatus = 'Ringing'; }
+      if (event.kind === 'call-response' && this.activeCall?.id === event.sessionId) this.callStatus = event.accepted ? 'Connected' : 'Declined';
+      if (event.kind === 'call-ended') this.clearCall(event.sessionId);
       void this.loadNotificationCount(this.auth.session()?.token, this.auth.session()?.user?.role);
     });
   }
@@ -191,5 +239,32 @@ export class AppComponent {
   private blurFocusedElement() {
     const activeElement = document.activeElement;
     if (activeElement instanceof HTMLElement && activeElement.closest('ion-router-outlet')) activeElement.blur();
+  }
+
+  async answerCall(accepted: boolean) {
+    const call = this.incomingCall;
+    if (!call) return;
+    this.incomingCall = null;
+    try {
+      const result = await this.realtime.respondToCall(call.id, accepted);
+      this.activeCall = accepted ? result.call : null;
+      this.callStatus = accepted ? 'Connected' : 'Declined';
+    } catch {
+      this.activeCall = null;
+      this.callStatus = 'Ended';
+    }
+  }
+
+  async endActiveCall() {
+    const call = this.activeCall;
+    this.activeCall = null;
+    if (!call) return;
+    await this.realtime.endCall(call.id).catch(() => undefined);
+  }
+
+  private clearCall(sessionId: string) {
+    if (this.incomingCall?.id === sessionId) this.incomingCall = null;
+    if (this.activeCall?.id === sessionId) this.activeCall = null;
+    this.callStatus = 'Ended';
   }
 }

@@ -1,0 +1,55 @@
+<div class="ion-page" [class.driver-page]="role === 'driver'" [class.employer-page]="role === 'employer'">
+  <app-workspace-header [role]="role" title="Notifications" [notificationCount]="unreadCount" [showBack]="true" (backRequested)="goBack()" (refreshRequested)="load(false)"></app-workspace-header>
+  <ion-content [class.driver-workspace]="role === 'driver'">
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="notification-shell">
+      <section class="page-intro">
+        <p class="eyebrow">{{ role }} alerts</p>
+        <h1>Notification center</h1>
+        <span>{{ notices.length }} recent update{{ notices.length === 1 ? '' : 's' }}</span>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <p class="state" *ngIf="loading">Loading notifications...</p>
+
+      <section class="notice-list" *ngIf="!loading">
+        <button class="notice-card" *ngFor="let notice of notices; let index = index" [ngClass]="notice.tone" type="button" (click)="openNotice(notice, index)" [attr.aria-label]="'Read ' + notice.title">
+          <div class="notice-icon"><ion-icon [name]="notice.icon"></ion-icon></div>
+          <div>
+            <h2>{{ notice.title }}</h2>
+            <p>{{ notice.message }}</p>
+            <small>{{ notice.time }}</small>
+          </div>
+        </button>
+        <article class="empty" *ngIf="notices.length === 0">
+          <ion-icon name="notifications-off-outline"></ion-icon>
+          <h2>No notifications yet</h2>
+          <p>New booking, route, verification, and account updates will appear here.</p>
+        </article>
+      </section>
+    </main>
+  </ion-content>
+
+  <ion-modal [isOpen]="noticeModalOpen" [initialBreakpoint]="0.52" [breakpoints]="[0, 0.52, 0.9]" handle="true" handleBehavior="drag" (didDismiss)="closeNotice()">
+    <ng-template>
+      <section class="notice-detail" *ngIf="selectedNotice as notice">
+        <header class="notice-detail-head"><div class="notice-icon" [ngClass]="notice.tone"><ion-icon [name]="notice.icon"></ion-icon></div><button type="button" class="modal-close" (click)="closeNotice()" aria-label="Close notification"><ion-icon name="close-outline"></ion-icon></button></header>
+        <p class="eyebrow">{{ role }} notification</p>
+        <h2>{{ notice.title }}</h2>
+        <p>{{ notice.message }}</p>
+        <small>{{ notice.time }}</small>
+      </section>
+    </ng-template>
+  </ion-modal>
+
+  <app-employer-nav *ngIf="role === 'employer'" active="dashboard"></app-employer-nav>
+  <ion-footer *ngIf="role === 'driver'" class="driver-bottom-nav">
+    <div class="bottom-nav">
+      <button class="nav-item" (click)="navigate('/driver/dashboard')"><ion-icon name="grid-outline"></ion-icon><span>Dashboard</span></button>
+      <button class="nav-item" (click)="navigate('/driver/bookings')"><ion-icon name="calendar-outline"></ion-icon><span>Bookings</span></button>
+      <button class="nav-item availability-nav" (click)="navigate('/driver/dashboard')"><div><ion-icon name="power-outline"></ion-icon></div><span>Status</span></button>
+      <button class="nav-item" (click)="navigate('/driver/earnings')"><ion-icon name="bar-chart-outline"></ion-icon><span>Earnings</span></button>
+      <button class="nav-item" (click)="navigate('/driver/profile')"><ion-icon name="person-circle-outline"></ion-icon><span>Profile</span></button>
+    </div>
+  </ion-footer>
+</div>

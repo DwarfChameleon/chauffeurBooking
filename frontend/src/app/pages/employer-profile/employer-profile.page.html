@@ -1,0 +1,86 @@
+<div class="employer-page">
+  <app-workspace-header role="employer" title="Profile" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="page-shell">
+      <div class="topbar profile-action-row">
+        <div><p class="eyebrow">Employer profile</p><h1>{{ profileGreeting }}</h1></div>
+        <div class="topbar-actions"><span *ngIf="saving" class="circular-progress" [style.--progress.%]="saveProgress"><span>{{ saveProgress }}%</span></span><ion-button *ngIf="editing" class="save-button top-save" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors">{{ saving ? 'Saving...' : 'Save' }}</ion-button></div>
+      </div>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <p class="state success" *ngIf="success">{{ success }}</p>
+      <p class="state" *ngIf="loading">Loading employer profile...</p>
+
+      <section class="profile-layout" *ngIf="!loading">
+        <aside class="profile-summary">
+          <div *ngIf="!editing" class="edit-control summary-edit-control"><ion-button class="edit-action" (click)="editProfile()" aria-label="Edit profile" title="Edit profile"><ion-icon name="create-outline" slot="icon-only"></ion-icon></ion-button><small>Edit Profile</small></div>
+          <div class="photo-wrap">
+            <img *ngIf="profile.employerProfile.profilePicture; else fallback" [src]="profile.employerProfile.profilePicture" alt="">
+            <ng-template #fallback><div class="photo-fallback"><ion-icon name="business-outline"></ion-icon></div></ng-template>
+            <button *ngIf="editing" class="photo-edit" type="button" (click)="openPhotoModal()" aria-label="Change employer profile picture" title="Change profile picture"><ion-icon name="create-outline"></ion-icon></button>
+          </div>
+          <h2>{{ profile.name || 'Employer' }}</h2>
+          <p>{{ profile.email || profile.phone || 'Contact pending' }}</p>
+          <span class="verify-pill" [class.verified]="completeness.verified"><ion-icon [name]="completeness.verified ? 'checkmark-circle' : 'shield-checkmark-outline'"></ion-icon>{{ completeness.verified ? 'Verified employer' : 'Verification pending' }}</span>
+          <div class="progress-track"><span [style.width.%]="completeness.score"></span></div>
+          <small>{{ completeness.score }}% complete</small>
+        </aside>
+
+        <section class="form-stack">
+          <article class="panel" id="personal">
+            <div class="panel-head"><div><p class="eyebrow">Personal information</p><h2>{{ profileDataTitle }}</h2></div><button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('personal')" aria-label="Edit personal information"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><ion-icon *ngIf="editing" name="person-circle-outline"></ion-icon></div>
+            <div class="form-grid">
+              <label>Full name<input [(ngModel)]="profile.name" [readonly]="!editing" type="text"></label>
+              <label>Email<input [(ngModel)]="profile.email" [readonly]="!editing" type="email"></label>
+              <label [class.invalid]="editing && !isNigeriaPhone(profile.phone)">Phone<input [(ngModel)]="profile.phone" [readonly]="!editing" type="tel"><span class="field-error" *ngIf="editing && !isNigeriaPhone(profile.phone)">{{ phoneError }}</span></label>
+              <label>Emergency Contact<input [(ngModel)]="profile.employerProfile.emergencyContactName" [readonly]="!editing" type="text" placeholder="Contact name"></label>
+              <label [class.invalid]="editing && !isNigeriaPhone(profile.employerProfile.emergencyContactPhone)">Contact phone<input [(ngModel)]="profile.employerProfile.emergencyContactPhone" [readonly]="!editing" type="tel"><span class="field-error" *ngIf="editing && !isNigeriaPhone(profile.employerProfile.emergencyContactPhone)">{{ phoneError }}</span></label>
+            </div>
+          </article>
+
+          <article class="panel" id="organisation">
+            <div class="panel-head"><div><p class="eyebrow">Organisation</p><h2>Company and service needs</h2></div><button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('organisation')" aria-label="Edit organisation"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><ion-icon *ngIf="editing" name="business-outline"></ion-icon></div>
+            <div class="form-grid">
+              <label>Company / organisation<input [(ngModel)]="profile.employerProfile.companyName" [readonly]="!editing" type="text"></label>
+              <label>Industry<input [(ngModel)]="profile.employerProfile.industry" [readonly]="!editing" type="text"></label>
+              <label>Preferred service<select [(ngModel)]="profile.employerProfile.preferredService" [disabled]="!editing"><option value="">Not Set</option><option value="emergency_dispatch">Emergency dispatch</option><option value="ride_hailing">Ride-hailing</option><option value="logistics">Logistics</option><option value="chauffeur">Chauffeur booking</option><option value="field_verification">Field verification</option></select></label>
+              <label>Preferred car type<select [(ngModel)]="profile.employerProfile.vehicleType" [disabled]="!editing"><option value="">Not Set</option><option value="small_car">Small car</option><option value="suv">SUV</option><option value="truck">Truck</option><option value="motorcycle">Motorcycle</option><option value="van">Van</option><option value="bus">Bus</option></select></label>
+              <label>Transmission<select [(ngModel)]="profile.employerProfile.transmission" [disabled]="!editing"><option value="">Not Set</option><option value="automatic">Automatic</option><option value="manual">Manual</option><option value="both">Either</option></select></label>
+            </div>
+          </article>
+
+          <article class="panel" id="location">
+            <div class="panel-head"><div><p class="eyebrow">Location</p><h2>Address and dispatch area</h2></div><button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('location')" aria-label="Edit location"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><ion-icon *ngIf="editing" name="location-outline"></ion-icon></div>
+            <div class="form-grid">
+              <label>State<select [(ngModel)]="profile.employerProfile.state" [disabled]="!editing"><option value="">Not Set</option><option *ngFor="let state of stateOptions" [value]="state">{{ state }}</option></select></label>
+              <label>City<input [(ngModel)]="profile.employerProfile.city" [readonly]="!editing" type="text"></label>
+              <label>Town<input [(ngModel)]="profile.employerProfile.town" [readonly]="!editing" type="text"></label>
+              <label class="wide">Address<textarea [(ngModel)]="profile.employerProfile.address" [readonly]="!editing" rows="3"></textarea></label>
+            </div>
+            <div class="location-callout"><span><ion-icon name="navigate-outline"></ion-icon>{{ hasLocation ? 'Location captured for distance matching' : 'No distance location captured' }}</span><button *ngIf="editing" type="button" (click)="useCurrentLocation()"><ion-icon name="locate-outline"></ion-icon> Use current location</button></div>
+          </article>
+
+          <article class="panel" id="documents">
+            <div class="panel-head"><div><p class="eyebrow">Documents</p><h2>Verification uploads</h2></div><button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('documents')" aria-label="Edit documents"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><ion-icon *ngIf="editing" name="document-attach-outline"></ion-icon></div>
+            <div class="document-grid">
+              <div class="doc-card" *ngFor="let doc of documentItems">
+                <div><strong>{{ doc.label }}</strong><span [class.verified]="doc.record.status === 'verified'"><ion-icon [name]="doc.record.status === 'verified' ? 'checkmark-circle' : 'cloud-upload-outline'"></ion-icon>{{ doc.record.status }}</span></div>
+                <a *ngIf="doc.record.reference" [href]="doc.record.reference" target="_blank">Preview uploaded file</a>
+                <label *ngIf="editing" class="doc-upload"><ion-icon name="cloud-upload-outline"></ion-icon> Upload<input type="file" accept="image/*,application/pdf" (change)="uploadDocument(doc.key, $event)"></label>
+              </div>
+            </div>
+          </article>
+        </section>
+        <div class="bottom-save" *ngIf="editing"><span *ngIf="saving" class="circular-progress" [style.--progress.%]="saveProgress"><span>{{ saveProgress }}%</span></span><ion-button class="save-button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors">{{ saving ? 'Saving...' : 'Save' }}</ion-button></div>
+      </section>
+    </main>
+  </ion-content>
+  <app-employer-nav active="profile" (navigationAttempt)="attemptExit($event)"></app-employer-nav>
+</div>
+<div class="exit-overlay" *ngIf="exitPromptOpen" role="dialog" aria-modal="true" aria-labelledby="exit-title">
+  <div class="exit-dialog"><ion-icon name="alert-circle-outline"></ion-icon><h2 id="exit-title">Unsaved changes</h2><p>You have changes that have not been saved. What would you like to do?</p><div><button type="button" (click)="exitPromptOpen=false">Cancel</button><button type="button" class="discard" (click)="discardAndExit()">Exit without saving</button><button type="button" class="save-exit" (click)="saveAndExit()">Save</button></div></div>
+</div>
+<ion-modal [isOpen]="photoModalOpen" [initialBreakpoint]="0.9" [breakpoints]="[0, 0.5, 0.9]" handle="true" handleBehavior="drag" (didDismiss)="closePhotoModal()">
+  <ng-template><div class="photo-modal"><div class="modal-drag-grip" aria-hidden="true"><span></span><span></span><span></span></div><div class="photo-modal-head"><div><p class="eyebrow">Profile picture</p><h2>Upload a profile picture</h2><p>Choose a clear profile picture. Facial verification is temporarily disabled.</p></div><button type="button" class="modal-close" (click)="closePhotoModal()" aria-label="Close upload modal" title="Close"><ion-icon name="close-outline"></ion-icon></button></div><div class="photo-source-grid"><button type="button" (click)="choosePhoto('camera')"><ion-icon name="camera-outline"></ion-icon><strong>Camera</strong><small>Take a new photo</small></button><button type="button" (click)="choosePhoto('gallery')"><ion-icon name="images-outline"></ion-icon><strong>Gallery</strong><small>Choose a photo</small></button></div><input id="employer-camera-input" hidden type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)"><input id="employer-gallery-input" hidden type="file" accept="image/*" (change)="onPhotoSelected($event)"><div class="photo-preview" *ngIf="photoPreviewUrl"><img [src]="photoPreviewUrl" alt="Selected profile preview"><span>{{ selectedPhoto?.name }}</span></div><div *ngIf="photoChecking || photoUploading || photoProgress > 0" class="upload-progress"><span class="circular-progress" [style.--progress.%]="photoProgress"><span>{{ photoProgress }}%</span></span><strong>{{ photoChecking ? 'Validating face...' : photoUploading ? 'Uploading photo...' : photoValidationError ? 'Validation failed' : 'Validation complete' }}</strong></div><p class="photo-error" *ngIf="photoValidationError">{{ photoValidationError }}</p><div class="photo-modal-actions"><button *ngIf="photoPreviewUrl" type="button" class="photo-upload" style="width:40%;min-height:44px;background:#12805c;color:#fff;border:0;border-radius:8px;font-weight:900;" [disabled]="!selectedPhoto || photoChecking || photoUploading || !photoValidated" (click)="uploadSelectedPhoto()">{{ photoChecking ? 'Validating face...' : photoUploading ? 'Uploading photo...' : 'Upload photo' }}</button><button type="button" style="width:40%;min-height:44px;background:#eef2f7;color:#475569;border:0;border-radius:8px;font-weight:900;" (click)="closePhotoModal()">Cancel</button></div></div></ng-template>
+</ion-modal>

@@ -1,0 +1,97 @@
+<ion-content [fullscreen]="true" class="landing-page">
+  <div class="screen">
+    <section class="hero">
+      <div class="topbar">
+        <div class="brand" aria-label="BJED Chauffeur">
+          <img src="assets/images/logo.png" alt="BJED Chauffeur" />
+        </div>
+
+        <button class="profile-btn" type="button" aria-label="Sign in" (click)="goToSignIn($event)">
+          <ion-icon name="person-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="hero-copy">
+        <h1>
+          Verified.
+          <span>Confident.</span>
+          Experienced.
+        </h1>
+
+        <div class="gold-line"></div>
+
+        <div class="trust-row">
+          <div class="trust-item">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <span>Verified</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="trust-item">
+            <ion-icon name="star-outline"></ion-icon>
+            <span>Experienced</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="trust-item">
+            <ion-icon name="lock-closed-outline"></ion-icon>
+            <span>Secure</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-image">
+        <img src="assets/images/chauffeur.png" alt="Professional chauffeur" />
+      </div>
+
+      <div class="city-glow"></div>
+    </section>
+
+    <section class="action-panel">
+      <button class="primary-action" type="button" (click)="goToRegister($event)">
+        <div class="button-icon">
+          <ion-icon name="person-add-outline"></ion-icon>
+        </div>
+
+        <span>CREATE ACCOUNT</span>
+
+        <ion-icon class="arrow" name="arrow-forward-outline"></ion-icon>
+      </button>
+
+      <button class="secondary-action" type="button" (click)="goToSignIn($event)">
+        <div class="button-icon">
+          <ion-icon name="person-outline"></ion-icon>
+        </div>
+
+        <span>SIGN IN</span>
+
+        <ion-icon class="arrow" name="arrow-forward-outline"></ion-icon>
+      </button>
+
+      <div class="service-row">
+        <div class="service-item">
+          <div class="service-icon">
+            <ion-icon name="car-outline"></ion-icon>
+          </div>
+          <span>On-time</span>
+        </div>
+
+        <div class="service-item">
+          <div class="service-icon">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </div>
+          <span>Safe</span>
+        </div>
+
+        <div class="service-item">
+          <div class="service-icon">
+            <ion-icon name="headset-outline"></ion-icon>
+          </div>
+          <span>Support</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</ion-content>

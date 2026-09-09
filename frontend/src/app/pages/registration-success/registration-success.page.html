@@ -1,0 +1,41 @@
+<ion-content [fullscreen]="true" class="success-content">
+  <main class="success-shell">
+    <section class="success-card">
+      <div class="success-icon">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+      </div>
+
+      <p class="eyebrow">Account created</p>
+      <h1>Welcome to B-JED Chauffeur</h1>
+      <p class="message">
+        Your account is ready. Choose the next step that fits what you want to do now.
+      </p>
+
+      <div class="actions" *ngIf="isDriver; else employerActions">
+        <ion-button expand="block" (click)="completeProfile()">
+          <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+          Complete profile
+        </ion-button>
+
+        <ion-button expand="block" fill="outline" (click)="goToDashboard()">
+          <ion-icon name="grid-outline" slot="start"></ion-icon>
+          Go to dashboard
+        </ion-button>
+      </div>
+
+      <ng-template #employerActions>
+        <div class="actions">
+          <ion-button expand="block" (click)="bookChauffeur()">
+            <ion-icon name="car-sport-outline" slot="start"></ion-icon>
+            Book Chauffeur
+          </ion-button>
+
+          <ion-button expand="block" fill="outline" (click)="goToDashboard()">
+            <ion-icon name="grid-outline" slot="start"></ion-icon>
+            Proceed to dashboard
+          </ion-button>
+        </div>
+      </ng-template>
+    </section>
+  </main>
+</ion-content>

@@ -1,0 +1,28 @@
+<ion-content class="admin-login-page">
+  <main class="admin-login-shell">
+    <section class="login-brand">
+      <div class="brand-mark"><ion-icon name="shield-checkmark-outline"></ion-icon></div>
+      <p class="eyebrow">BJED Chauffeur Admin</p>
+      <h1>Control room access</h1>
+      <p>Desktop-ready sign in for administrators managing bookings, chauffeurs, verification, and live operations.</p>
+    </section>
+
+    <section class="login-card">
+      <div class="card-top">
+        <span><ion-icon name="lock-closed-outline"></ion-icon></span>
+        <div><p class="eyebrow">Secure admin login</p><h2>Sign in as admin</h2></div>
+      </div>
+      <ion-item>
+        <ion-label position="stacked">Admin email or phone</ion-label>
+        <ion-input [(ngModel)]="contact" autocomplete="username" placeholder="admin@bjed.com or 080..." />
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Password</ion-label>
+        <ion-input [(ngModel)]="password" type="password" autocomplete="current-password" placeholder="Enter password" />
+      </ion-item>
+      <ion-note color="danger" *ngIf="error">{{ error }}</ion-note>
+      <ion-button expand="block" (click)="submit()" [disabled]="busy || !contact || !password">{{ busy ? 'Signing in...' : 'Enter admin workspace' }}</ion-button>
+      <p class="muted"><a routerLink="/login">Use regular app login</a></p>
+    </section>
+  </main>
+</ion-content>

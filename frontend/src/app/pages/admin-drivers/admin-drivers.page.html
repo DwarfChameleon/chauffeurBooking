@@ -1,0 +1,28 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Drivers" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <p class="eyebrow">Chauffeur supply</p><h1>Driver control</h1>
+      <ion-searchbar placeholder="Search driver, state or vehicle" (ionInput)="query = $any($event.target).value || ''"></ion-searchbar>
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <section class="list-panel">
+        <article class="driver-card" [class.live-trip]="driver.isActiveTrip" *ngFor="let driver of filteredDrivers">
+          <div class="avatar green"><img *ngIf="driver.profilePicture; else icon" [src]="driver.profilePicture" alt=""><ng-template #icon><ion-icon name="car-sport-outline"></ion-icon></ng-template></div>
+          <div class="body">
+            <strong>{{ driver.name || 'Unnamed chauffeur' }}</strong>
+            <small>{{ driver.email || driver.phone || 'No contact' }} • {{ driver.currentState || 'State not set' }}</small>
+            <span>{{ driver.readinessScore || 0 }}% readiness</span>
+            <span class="driver-status active" *ngIf="driver.isActiveTrip">active</span>
+          </div>
+          <div class="controls">
+            <label class="switch" [class.disabled]="driver.isActiveTrip" [title]="driver.isActiveTrip ? 'Driver is on a live trip' : 'Toggle availability'"><input type="checkbox" [checked]="driver.isAvailable" [disabled]="driver.isActiveTrip" (change)="setAvailability(driver, $any($event.target).checked)"><b></b></label>
+            <button class="danger" type="button" [disabled]="driver.isActiveTrip" [title]="driver.isActiveTrip ? 'Complete the live trip before deleting' : 'Delete driver'" (click)="deleteDriver(driver)"><ion-icon name="trash-outline"></ion-icon></button>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!loading && !filteredDrivers.length">No drivers found.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="drivers"></app-admin-nav>
+</div>

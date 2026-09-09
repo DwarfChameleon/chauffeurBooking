@@ -16,6 +16,11 @@ export class AuthService {
   async login(contact: string, password: string) { const result = await this.api.post<Session>('/auth/login', { email: contact, password }); this.save(result); return result; }
   async adminLogin(contact: string, password: string) { const result = await this.api.post<Session>('/administrator/login', { contact, password }); this.save(result); return result; }
   async register(data: Record<string, unknown>) { const result = await this.api.post<Session>('/auth/register', data); this.save(result); return result; }
+  changePassword(data: { currentPassword: string; newPassword: string }) {
+    const token = this.session()?.token;
+    if (!token) return Promise.reject(new Error('Please log in again to continue.'));
+    return this.api.patch<{ message: string }>('/auth/change-password', data, token);
+  }
   verifyForgotPassword(data: { email: string; phone: string; emergencyContactPhone: string }) { return this.api.post<{ resetToken: string; message: string }>('/auth/forgot-password/verify', data); }
   resetForgotPassword(data: { resetToken: string; password: string }) { return this.api.post<{ message: string }>('/auth/forgot-password/reset', data); }
   logout() { localStorage.removeItem(this.storageKey); this.session.set(null); void this.router.navigateByUrl('/'); }

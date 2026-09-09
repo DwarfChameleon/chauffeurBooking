@@ -1,0 +1,79 @@
+<div class="employer-page">
+  <app-workspace-header role="employer" title="Chauffeurs" (refreshRequested)="loadDrivers(false)"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="page-shell">
+      <section class="page-intro">
+        <div>
+          <p class="eyebrow">Chauffeur directory</p>
+          <h1>Available chauffeurs</h1>
+          <span>Drivers are ranked by distance, route experience, safety and verification.</span>
+        </div>
+      </section>
+
+      <section class="filter-panel">
+        <label>Employer state
+          <select [(ngModel)]="selectedState" (ngModelChange)="loadDrivers()">
+            <option value="">All supported states</option>
+            <option *ngFor="let state of stateOptions" [value]="state">{{ state }}</option>
+          </select>
+        </label>
+        <button class="ghost-button" type="button" (click)="captureLocation()"><ion-icon name="locate-outline"></ion-icon> Use my location</button>
+        <div class="result-count"><strong>{{ drivers.length }}</strong><span>available</span></div>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <div class="loading-state" *ngIf="loading">Finding chauffeurs near you...</div>
+
+      <section class="driver-grid" *ngIf="!loading">
+        <article class="driver-card" *ngFor="let driver of drivers">
+          <div class="driver-head">
+            <img *ngIf="driver.picture; else driverFallback" [src]="driver.picture" [alt]="driver.name">
+            <ng-template #driverFallback><span class="driver-fallback"><ion-icon name="person-circle-outline"></ion-icon></span></ng-template>
+            <div>
+              <h2>{{ driver.name }}</h2>
+              <p><ion-icon name="navigate-outline"></ion-icon>{{ driver.distanceLabel }}</p>
+            </div>
+            <span class="badge" [class.verified]="driver.verificationStatus === 'verified'"><ion-icon [name]="driver.verificationStatus === 'verified' ? 'checkmark-circle' : 'time-outline'"></ion-icon>{{ driver.verificationStatus === 'verified' ? 'Verified' : 'Review' }}</span>
+          </div>
+
+          <div class="route-box">
+            <span><ion-icon name="map-outline"></ion-icon> Route coverage</span>
+            <strong>{{ driver.routeCoverageLabel || driver.routeState || selectedState || 'Regional' }}</strong>
+            <small>{{ driver.route || 'Route pending' }}</small>
+            <div class="route-chip-grid" *ngIf="driver.routeCoverage?.length; else routePending">
+              <div class="route-chip" *ngFor="let coverage of driver.routeCoverage" [class.current]="coverage.isCurrent">
+                <b>{{ coverage.state }}</b>
+                <em>{{ coverage.years }} yr{{ coverage.years === 1 ? '' : 's' }}</em>
+                <small>{{ coverage.routes }}</small>
+              </div>
+            </div>
+            <ng-template #routePending><p class="route-empty">No accepted route states set yet.</p></ng-template>
+          </div>
+
+          <div class="score-grid">
+            <div><ion-icon name="star"></ion-icon><strong>{{ driver.rating === null ? 'New' : (driver.rating | number:'1.1-1') }}</strong><span>Rating</span></div>
+            <div><ion-icon name="ribbon-outline"></ion-icon><strong>{{ driver.experienceLevel }}</strong><span>{{ driver.yearsOfExperience }} yrs</span></div>
+            <div><ion-icon name="shield-checkmark-outline"></ion-icon><strong>{{ driver.safetyLevel }}</strong><span>{{ driver.accidentCount }} accident{{ driver.accidentCount === 1 ? '' : 's' }}</span></div>
+            <div><ion-icon name="git-branch-outline"></ion-icon><strong>{{ driver.readinessScore }}%</strong><span>Readiness</span></div>
+          </div>
+
+          <div class="driver-foot">
+            <span><ion-icon name="car-outline"></ion-icon>{{ formatVehicle(driver.vehicleType) }}</span>
+            <span><ion-icon name="speedometer-outline"></ion-icon>{{ formatVehicle(driver.transmission) || 'Transmission pending' }}</span>
+            <span><ion-icon name="checkmark-circle-outline"></ion-icon>{{ driver.completedTrips }} trips</span>
+          </div>
+
+          <button class="primary-button" type="button" (click)="requestDriver(driver)"><ion-icon name="calendar-outline"></ion-icon> Request chauffeur</button>
+        </article>
+
+        <article class="empty" *ngIf="drivers.length === 0">
+          <ion-icon name="car-outline"></ion-icon>
+          <h2>No available chauffeurs found</h2>
+          <p>Ask chauffeurs to go online and update their current operating state or route experience.</p>
+        </article>
+      </section>
+    </main>
+  </ion-content>
+  <app-employer-nav active="chauffeurs"></app-employer-nav>
+</div>

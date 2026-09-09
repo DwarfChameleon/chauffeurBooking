@@ -1,0 +1,20 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Users" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <p class="eyebrow">Account control</p><h1>All users</h1>
+      <ion-searchbar placeholder="Search name, email or phone" (ionInput)="query = $any($event.target).value || ''"></ion-searchbar>
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <section class="list-panel">
+        <article class="user-card" *ngFor="let user of filteredUsers">
+          <div class="avatar"><ion-icon [name]="user.role === 'driver' ? 'car-sport-outline' : user.role === 'admin' ? 'shield-checkmark-outline' : 'business-outline'"></ion-icon></div>
+          <div class="body"><strong>{{ user.name || user.email || user.phone || 'Unnamed account' }}</strong><small>{{ user.email || 'No email' }} • {{ user.phone || 'No phone' }}</small><span>{{ roleLabel(user) }}</span></div>
+          <button class="danger" type="button" (click)="deleteUser(user)"><ion-icon name="trash-outline"></ion-icon></button>
+        </article>
+        <p class="empty" *ngIf="!loading && !filteredUsers.length">No users found.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="users"></app-admin-nav>
+</div>

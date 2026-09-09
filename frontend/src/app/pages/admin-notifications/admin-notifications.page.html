@@ -1,0 +1,28 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Notifications" [showBack]="true" [notificationCount]="notices.length" (backRequested)="back()" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <p class="eyebrow">Admin alerts</p><h1>Notifications</h1>
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <section class="list-panel">
+        <button class="notice-card" *ngFor="let notice of notices" type="button" (click)="open(notice)">
+          <div class="avatar amber"><ion-icon [name]="noticeIcon(notice.type)"></ion-icon></div>
+          <div class="body"><strong>{{ notice.title }}</strong><small>{{ notice.body }}</small><span>{{ notice.type }}</span></div>
+        </button>
+        <p class="empty" *ngIf="!loading && !notices.length">No admin notifications right now.</p>
+      </section>
+    </main>
+    <ion-modal [isOpen]="!!selected" [initialBreakpoint]="0.48" [breakpoints]="[0,0.48,0.85]" (didDismiss)="selected = null">
+      <ng-template>
+        <main class="notice-sheet">
+          <button class="modal-close" type="button" (click)="selected = null"><ion-icon name="close-outline"></ion-icon></button>
+          <p class="eyebrow">{{ selected?.type }}</p>
+          <h2>{{ selected?.title }}</h2>
+          <p>{{ selected?.body }}</p>
+        </main>
+      </ng-template>
+    </ion-modal>
+  </ion-content>
+  <app-admin-nav active="dashboard"></app-admin-nav>
+</div>

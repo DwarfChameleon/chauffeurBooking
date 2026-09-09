@@ -1,0 +1,71 @@
+<div class="ion-page driver-page">
+  <app-workspace-header role="driver" title="Bookings" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content class="driver-workspace">
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="workspace-shell">
+      <section class="workspace-header page-intro"><div><p class="eyebrow">Driver Workspace</p><h1>Bookings</h1><p>Review assigned, upcoming, and completed driver work.</p></div></section>
+
+      <section class="summary-grid">
+        <article><span>Total</span><strong>{{ bookings.length }}</strong></article>
+        <article><span>Pending</span><strong>{{ count('pending') }}</strong></article>
+        <article><span>Accepted</span><strong>{{ count('confirmed') }}</strong></article>
+        <article><span>Completed</span><strong>{{ count('completed') }}</strong></article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">ASSIGNMENTS</p>
+            <h2>Booking List</h2>
+          </div>
+          <ion-badge>{{ bookings.length }}</ion-badge>
+        </div>
+
+        <p class="state" *ngIf="loading">Loading bookings...</p>
+        <p class="state error" *ngIf="error">{{ error }}</p>
+        <p class="state" *ngIf="!loading && !error && bookings.length === 0">No bookings assigned to this driver yet.</p>
+
+        <article class="booking-row" *ngFor="let booking of bookings">
+          <div class="booking-icon"><ion-icon name="car-outline"></ion-icon></div>
+          <div>
+            <h3>{{ booking.customerName }}</h3>
+            <p>{{ booking.pickup }} -> {{ booking.destination }}</p>
+            <small class="driver-note" *ngIf="booking.notes"><ion-icon name="chatbox-ellipses-outline"></ion-icon>{{ booking.notes }}</small>
+            <span><ion-icon name="time-outline"></ion-icon>{{ relativeBookingTime(booking) }}</span>
+          </div>
+          <div class="booking-side">
+            <strong class="status-pill" [ngClass]="booking.status">{{ booking.status | titlecase }}</strong>
+            <div class="row-actions">
+              <ion-button size="small" *ngIf="booking.status === 'pending'" (click)="acceptBooking(booking)">Accept</ion-button>
+              <ion-button size="small" fill="outline" color="danger" *ngIf="booking.status === 'pending'" (click)="rejectBooking(booking)">Reject</ion-button>
+              <ion-button size="small" fill="outline" *ngIf="booking.status === 'confirmed' || booking.status === 'started'" (click)="openRoute(booking)">Route</ion-button>
+              <ion-button size="small" color="success" *ngIf="booking.status === 'confirmed'" (click)="startTrip(booking)">Start Trip</ion-button>
+              <ion-button size="small" color="success" *ngIf="booking.status === 'started'" (click)="markArrived(booking)">Arrived</ion-button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </ion-content>
+
+  <ion-footer class="driver-bottom-nav">
+    <div class="bottom-nav">
+      <button class="nav-item" (click)="navigate('/driver/dashboard')"><ion-icon name="grid-outline"></ion-icon><span>Dashboard</span></button>
+      <button class="nav-item active" (click)="navigate('/driver/bookings')"><ion-icon name="calendar-outline"></ion-icon><span>Bookings</span></button>
+      <button class="nav-item availability-nav" (click)="navigate('/driver/dashboard')"><div><ion-icon name="power-outline"></ion-icon></div><span>Status</span></button>
+      <button class="nav-item" (click)="navigate('/driver/earnings')"><ion-icon name="bar-chart-outline"></ion-icon><span>Earnings</span></button>
+      <button class="nav-item" (click)="navigate('/driver/profile')"><ion-icon name="person-circle-outline"></ion-icon><span>Profile</span></button>
+    </div>
+  </ion-footer>
+  <app-route-map-modal
+    [isOpen]="routeModalOpen"
+    [driverCoordinates]="selectedRouteBooking?.driverCoordinates"
+    [pickupCoordinates]="selectedRouteBooking?.employerCoordinates"
+    [status]="selectedRouteBooking?.status || ''"
+    [driverLabel]="'Driver'"
+    [pickupLabel]="selectedRouteBooking?.pickup || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destination || ''"
+    [routeTitle]="selectedRouteBooking ? selectedRouteBooking.pickup + ' to ' + selectedRouteBooking.destination : 'Requested route'"
+    (close)="closeRouteMap()">
+  </app-route-map-modal>
+</div>

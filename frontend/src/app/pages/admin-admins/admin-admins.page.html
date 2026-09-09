@@ -1,0 +1,50 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Admin Control" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <section class="admin-control-hero">
+        <div><p class="eyebrow">Super admin controls</p><h1>Admin accounts</h1><p>Create, verify, activate, deactivate, promote, demote, and remove administrator accounts.</p></div>
+        <span class="access-pill" [class.locked]="!canManageAdmins"><ion-icon [name]="canManageAdmins ? 'shield-checkmark-outline' : 'lock-closed-outline'"></ion-icon>{{ canManageAdmins ? 'Super admin' : 'Read only' }}</span>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <p class="state success" *ngIf="success">{{ success }}</p>
+
+      <section class="create-panel" *ngIf="canManageAdmins">
+        <div class="panel-title"><div><p class="eyebrow">New administrator</p><h2>Create admin access</h2></div></div>
+        <div class="form-grid">
+          <label>Full name<input [(ngModel)]="form.name" placeholder="Admin name"></label>
+          <label>Email<input [(ngModel)]="form.email" placeholder="admin@example.com"></label>
+          <label>Phone<input [(ngModel)]="form.phone" placeholder="08031234567"></label>
+          <label>Password<input [(ngModel)]="form.password" type="password" placeholder="Minimum 6 characters"></label>
+          <label>Privilege<select [(ngModel)]="form.adminLevel"><option value="standard">Standard admin</option><option value="super">Super admin</option></select></label>
+        </div>
+        <ion-button (click)="createAdmin()" [disabled]="busy || !form.name || !form.password || (!form.email && !form.phone)">Create admin</ion-button>
+      </section>
+
+      <section class="list-panel admin-account-list">
+        <article class="admin-account-card" *ngFor="let admin of admins">
+          <div class="admin-avatar"><ion-icon [name]="admin.adminLevel === 'super' ? 'shield-checkmark-outline' : 'person-circle-outline'"></ion-icon></div>
+          <div class="body">
+            <strong>{{ admin.name || admin.email || admin.phone || 'Unnamed admin' }}</strong>
+            <small>{{ admin.email || 'No email' }} • {{ admin.phone || 'No phone' }}</small>
+            <div class="chip-row">
+              <span [class.super]="admin.adminLevel === 'super'">{{ admin.adminLevel }}</span>
+              <span [class.off]="admin.adminStatus === 'deactivated'">{{ admin.adminStatus }}</span>
+              <span [class.verified]="admin.adminVerified">{{ admin.adminVerified ? 'verified' : 'unverified' }}</span>
+            </div>
+          </div>
+          <div class="controls admin-controls" *ngIf="canManageAdmins">
+            <button class="icon-button" type="button" (click)="toggleLevel(admin)" [title]="admin.adminLevel === 'super' ? 'Make standard admin' : 'Make super admin'"><ion-icon name="shield-half-outline"></ion-icon></button>
+            <button class="icon-button" type="button" (click)="verify(admin)" title="Verify admin"><ion-icon name="checkmark-done-outline"></ion-icon></button>
+            <button class="icon-button" type="button" (click)="toggleStatus(admin)" [title]="admin.adminStatus === 'active' ? 'Deactivate admin' : 'Activate admin'"><ion-icon [name]="admin.adminStatus === 'active' ? 'pause-circle-outline' : 'play-circle-outline'"></ion-icon></button>
+            <button class="danger" type="button" (click)="deleteAdmin(admin)" title="Delete admin"><ion-icon name="trash-outline"></ion-icon></button>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!loading && !admins.length">No admin accounts found.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="admins"></app-admin-nav>
+</div>

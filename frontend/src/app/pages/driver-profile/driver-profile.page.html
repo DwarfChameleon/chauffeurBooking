@@ -1,0 +1,205 @@
+<div class="ion-page driver-page">
+  <app-workspace-header role="driver" title="Profile" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content class="driver-workspace">
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="workspace-shell">
+      <div class="workspace-header profile-action-row">
+        <div>
+          <p class="eyebrow">Driver Workspace</p>
+          <h1>{{ profileGreeting }}</h1>
+        </div>
+        <div class="header-actions">
+          <ion-button *ngIf="editing" class="save-button top-save" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors">
+            {{ saving ? 'Saving...' : 'Save' }}
+          </ion-button>
+          <div *ngIf="!editing" class="edit-control"><ion-button class="edit-action" (click)="editProfile()" aria-label="Edit profile" title="Edit profile"><ion-icon name="create-outline" slot="icon-only"></ion-icon></ion-button><small>Edit</small></div>
+        </div>
+      </div>
+
+      <section class="profile-top">
+        <article class="profile-card">
+          <div class="avatar-preview">
+            <img *ngIf="profile.profilePicture; else avatarFallback" [src]="profile.profilePicture" alt="Driver profile picture">
+            <ng-template #avatarFallback><ion-icon name="person-circle-outline"></ion-icon></ng-template>
+          </div>
+          <div class="profile-card-copy">
+            <span>Profile Completeness</span>
+            <strong>{{ completeness.score }}%</strong>
+            <p>{{ completeness.completed }} of {{ completeness.total }} checks complete</p>
+            <button *ngIf="editing" class="mini-upload-button" type="button" (click)="openUploadModal('profile')">
+              <ion-icon name="camera-outline"></ion-icon> Change picture
+            </button>
+          </div>
+          <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('personal')"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button>
+        </article>
+
+        <article class="profile-card">
+          <div class="score-ring">{{ performance.score }}</div>
+          <div>
+            <span>Skill Performance</span>
+            <strong>{{ performance.label }}</strong>
+            <p>{{ performance.completedTrips }} completed trips. {{ routeCoverageLabel }}</p>
+          </div>
+          <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('routes')"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button>
+        </article>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <p class="state success" *ngIf="success">{{ success }}</p>
+      <p class="state" *ngIf="loading">Loading profile...</p>
+
+      <section class="profile-grid" *ngIf="!loading">
+        <article class="panel identity-panel" id="personal">
+          <div class="panel-header">
+            <div><p class="panel-kicker">IDENTITY</p><h2>Personal Information</h2></div>
+            <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('personal')" aria-label="Edit personal information"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><div *ngIf="editing" class="panel-actions"><button class="mini-save" type="button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors"><ion-icon name="save-outline"></ion-icon>Save</button><ion-icon name="person-circle-outline"></ion-icon></div>
+          </div>
+          <div class="form-grid">
+            <label>Full name<input [(ngModel)]="profile.name" [readonly]="!editing" type="text"></label>
+            <label>Email<input [(ngModel)]="profile.email" [readonly]="!editing" type="email"></label>
+            <label [class.invalid]="editing && !isNigeriaPhone(profile.phone)">Phone<input [(ngModel)]="profile.phone" [readonly]="!editing" type="tel"><span class="field-error" *ngIf="editing && !isNigeriaPhone(profile.phone)">{{ phoneError }}</span></label>
+            <label>Date of birth<input [(ngModel)]="profile.personalInformation.dateOfBirth" [readonly]="!editing" type="date"></label>
+            <label class="wide">Address<textarea [(ngModel)]="profile.personalInformation.address" [readonly]="!editing" rows="3"></textarea></label>
+            <label>Emergency contact<input [(ngModel)]="profile.personalInformation.emergencyContactName" [readonly]="!editing" type="text"></label>
+            <label [class.invalid]="editing && !isNigeriaPhone(profile.personalInformation.emergencyContactPhone)">Emergency phone<input [(ngModel)]="profile.personalInformation.emergencyContactPhone" [readonly]="!editing" type="tel"><span class="field-error" *ngIf="editing && !isNigeriaPhone(profile.personalInformation.emergencyContactPhone)">{{ phoneError }}</span></label>
+          </div>
+        </article>
+
+        <article class="panel" id="license">
+          <div class="panel-header">
+            <div><p class="panel-kicker">LICENSE</p><h2>Driving Details</h2></div>
+            <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('license')" aria-label="Edit driving details"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><div *ngIf="editing" class="panel-actions"><button class="mini-save" type="button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors"><ion-icon name="save-outline"></ion-icon>Save</button><ion-icon name="id-card-outline"></ion-icon></div>
+          </div>
+          <div class="form-grid">
+            <label>Years of driving<input [(ngModel)]="profile.yearsOfDriving" [readonly]="!editing" min="0" type="number"></label>
+            <label>Current operating state<select [(ngModel)]="profile.currentState" [disabled]="!editing"><option value="">Not Set</option><option *ngFor="let state of routeStates" [value]="state">{{ state }}</option></select></label>
+            <label>License number<input [(ngModel)]="profile.licenseNumber" [readonly]="!editing" type="text"></label>
+            <label>License issue year<input [(ngModel)]="profile.licenseYear" [readonly]="!editing" min="1970" type="number"></label>
+          </div>
+        </article>
+
+        <article class="panel" id="vehicle">
+          <div class="panel-header">
+            <div><p class="panel-kicker">VEHICLE</p><h2>Capability</h2></div>
+            <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('vehicle')" aria-label="Edit vehicle capability"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><div *ngIf="editing" class="panel-actions"><button class="mini-save" type="button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors"><ion-icon name="save-outline"></ion-icon>Save</button><ion-icon name="car-sport-outline"></ion-icon></div>
+          </div>
+          <div class="form-grid">
+            <label>Transmission<select [(ngModel)]="profile.vehicle.transmission" [disabled]="!editing"><option value="">Select</option><option value="automatic">Automatic</option><option value="manual">Manual</option><option value="both">Both</option></select></label>
+            <label>Vehicle type<select [(ngModel)]="profile.vehicle.type" [disabled]="!editing"><option value="">Select</option><option value="all">All</option><option value="suv_small_cars">SUV & Small cars</option><option value="suv">SUV</option><option value="truck">Truck</option><option value="small_car">Small car</option><option value="motorcycle">Motorcycle</option><option value="van">Van</option><option value="bus">Bus</option></select></label>
+            <label>Vehicle model<input [(ngModel)]="profile.vehicle.model" [readonly]="!editing" type="text"></label>
+            <label>Plate number<input [(ngModel)]="profile.vehicle.plateNumber" [readonly]="!editing" type="text"></label>
+          </div>
+        </article>
+
+        <article class="panel route-panel" id="routes">
+          <div class="panel-header">
+            <div><p class="panel-kicker">ROUTES</p><h2>South-South Route Experience</h2></div>
+            <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('routes')" aria-label="Edit route experience"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><div *ngIf="editing" class="panel-actions"><button class="mini-save" type="button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors"><ion-icon name="save-outline"></ion-icon>Save</button><ion-icon name="map-outline"></ion-icon></div>
+          </div>
+          <div class="route-row" *ngFor="let route of profile.routeExperience">
+            <strong>{{ route.state }}</strong>
+            <input [(ngModel)]="route.years" [readonly]="!editing" min="0" type="number" aria-label="Years of route experience">
+            <div class="route-editor">
+              <label>Suggested routes
+                <select multiple [ngModel]="selectedRoutes[route.state]" [disabled]="!editing" (ngModelChange)="setRouteSelection(route.state, $event)">
+                  <option *ngFor="let option of routeOptions[route.state]" [value]="option">{{ option }}</option>
+                </select>
+              </label>
+              <input [(ngModel)]="route.routes" [readonly]="!editing" type="text" placeholder="Add another route or route note">
+            </div>
+          </div>
+        </article>
+
+        <article class="panel documents-panel" id="documents">
+          <div class="panel-header">
+            <div><p class="panel-kicker">VERIFICATION</p><h2>Document Cards</h2></div>
+            <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('documents')" aria-label="Edit documents"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><div *ngIf="editing" class="panel-actions"><button class="mini-save" type="button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors"><ion-icon name="save-outline"></ion-icon>Save</button><ion-icon name="shield-checkmark-outline"></ion-icon></div>
+          </div>
+          <div class="document-card" *ngFor="let doc of documentCards">
+            <div class="document-heading">
+              <ion-icon [name]="doc.icon"></ion-icon>
+              <div><strong>{{ doc.label }}</strong><small>{{ documentStatusLabel(profile.documents[doc.key].status) }}</small></div>
+            </div>
+            <div class="document-status" [class.verified]="profile.documents[doc.key].status === 'verified'" [class.pending]="profile.documents[doc.key].status === 'pending'" [class.rejected]="profile.documents[doc.key].status === 'rejected'">
+              <ion-icon [name]="documentStatusIcon(profile.documents[doc.key].status)"></ion-icon>
+              {{ documentStatusLabel(profile.documents[doc.key].status) }}
+            </div>
+            <div class="document-actions">
+              <div class="document-preview" *ngIf="profile.documents[doc.key].reference">
+                <img *ngIf="isImageReference(profile.documents[doc.key].reference)" [src]="profile.documents[doc.key].reference" [alt]="doc.label">
+                <a [href]="profile.documents[doc.key].reference" target="_blank" rel="noreferrer"><ion-icon name="eye-outline"></ion-icon> View file</a>
+              </div>
+              <button *ngIf="editing" class="upload-button" type="button" (click)="openUploadModal(doc.key)">
+                <ion-icon name="cloud-upload-outline"></ion-icon>
+                {{ profile.documents[doc.key].reference ? 'Replace file' : 'Upload file' }}
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel checks-panel" id="readiness">
+          <div class="panel-header">
+            <div><p class="panel-kicker">READINESS</p><h2>Completeness Checks</h2></div>
+            <button *ngIf="!editing" class="card-edit" type="button" (click)="editProfile('documents')"><ion-icon name="create-outline"></ion-icon><span>Edit</span></button><div *ngIf="editing" class="panel-actions"><button class="mini-save" type="button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors"><ion-icon name="save-outline"></ion-icon>Save</button><ion-icon name="speedometer-outline"></ion-icon></div>
+          </div>
+          <div class="check-row" *ngFor="let check of completeness.checks">
+            <span [class.done]="check.complete"><ion-icon [name]="check.complete ? 'checkmark-circle-outline' : 'document-text-outline'"></ion-icon></span>
+            <p>{{ check.label }}</p>
+          </div>
+          <div class="strengths" *ngIf="performance.strengths.length > 0">
+            <span *ngFor="let strength of performance.strengths">{{ strength }}</span>
+          </div>
+        </article>
+        <div class="bottom-save" *ngIf="editing"><ion-button class="save-button" (click)="save()" [disabled]="saving || loading || !hasUnsavedChanges() || hasPhoneErrors">{{ saving ? 'Saving...' : 'Save' }}</ion-button></div>
+      </section>
+    </main>
+  </ion-content>
+
+  <ion-footer class="driver-bottom-nav">
+    <div class="bottom-nav">
+      <button class="nav-item" (click)="navigate('/driver/dashboard')"><ion-icon name="grid-outline"></ion-icon><span>Dashboard</span></button>
+      <button class="nav-item" (click)="navigate('/driver/bookings')"><ion-icon name="calendar-outline"></ion-icon><span>Bookings</span></button>
+      <button class="nav-item availability-nav" (click)="navigate('/driver/dashboard')"><div><ion-icon name="power-outline"></ion-icon></div><span>Status</span></button>
+      <button class="nav-item" (click)="navigate('/driver/earnings')"><ion-icon name="bar-chart-outline"></ion-icon><span>Earnings</span></button>
+      <button class="nav-item active" (click)="navigate('/driver/profile')"><ion-icon name="person-circle-outline"></ion-icon><span>Profile</span></button>
+    </div>
+  </ion-footer>
+  <div class="exit-overlay" *ngIf="exitPromptOpen" role="dialog" aria-modal="true" aria-labelledby="exit-title">
+    <div class="exit-dialog"><ion-icon name="alert-circle-outline"></ion-icon><h2 id="exit-title">Unsaved changes</h2><p>You have changes that have not been saved. What would you like to do?</p><div><button type="button" (click)="exitPromptOpen=false">Cancel</button><button type="button" class="discard" (click)="discardAndExit()">Exit without saving</button><button type="button" class="save-exit" (click)="saveAndExit()">Save</button></div></div>
+  </div>
+
+  <ion-modal [isOpen]="uploadModalOpen" (didDismiss)="closeUploadModal()">
+    <ng-template>
+      <div class="upload-modal-shell">
+        <div class="upload-modal-header">
+          <div><p class="panel-kicker">SECURE UPLOAD</p><h2>{{ uploadTitle }}</h2><p>Choose a source, preview the file, then send it for admin verification.</p></div>
+          <button class="modal-close" type="button" (click)="closeUploadModal()"><ion-icon name="close-outline"></ion-icon></button>
+        </div>
+
+        <input #uploadInput hidden type="file" [accept]="uploadTarget === 'profile' ? 'image/*' : 'image/*,application/pdf'" [attr.capture]="uploadSource === 'camera' ? 'environment' : null" (change)="onFileSelected($event)">
+        <div class="upload-source-grid">
+          <button type="button" (click)="chooseUploadSource('camera', uploadInput)"><ion-icon name="camera-outline"></ion-icon><span>Camera</span><small>Take a new photo</small></button>
+          <button type="button" (click)="chooseUploadSource('gallery', uploadInput)"><ion-icon name="images-outline"></ion-icon><span>Gallery / Files</span><small>Choose from device</small></button>
+        </div>
+
+        <div class="upload-dropzone" (click)="chooseUploadSource('gallery', uploadInput)" (dragover)="$event.preventDefault()" (drop)="onFileDrop($event)">
+          <ion-icon name="document-attach-outline"></ion-icon>
+          <strong>Drop a file here or browse</strong>
+          <span>Images and PDF files up to 5 MB</span>
+        </div>
+
+        <div class="upload-preview" *ngIf="selectedFile">
+          <img *ngIf="uploadPreviewUrl; else filePreviewIcon" [src]="uploadPreviewUrl" alt="Selected upload preview">
+          <ng-template #filePreviewIcon><ion-icon name="document-text-outline"></ion-icon></ng-template>
+          <div><strong>{{ selectedFile.name }}</strong><span>{{ formatFileSize(selectedFile.size) }}</span></div>
+          <button type="button" (click)="clearSelectedFile()"><ion-icon name="close-outline"></ion-icon></button>
+        </div>
+
+        <div class="upload-modal-footer">
+          <span class="upload-note" *ngIf="uploadTarget !== 'profile'"><ion-icon name="information-circle-outline"></ion-icon> A new upload becomes Pending until an admin verifies it.</span>
+          <button class="primary-upload" type="button" (click)="uploadSelected()" [disabled]="!selectedFile || uploading"><ion-icon name="cloud-upload-outline"></ion-icon>{{ uploading ? 'Uploading...' : 'Upload securely' }}</button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+</div>

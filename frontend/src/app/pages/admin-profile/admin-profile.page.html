@@ -1,0 +1,62 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Profile" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <section class="profile-hero">
+        <div class="profile-avatar">{{ profile?.initials || 'AD' }}</div>
+        <div>
+          <p class="eyebrow">Admin account</p>
+          <h1>{{ profile?.name || profile?.email || 'Administrator' }}</h1>
+          <p>{{ profile?.workspace?.appName || 'BJED Chauffeur' }} control access</p>
+        </div>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+
+      <section class="profile-grid" *ngIf="profile as admin">
+        <article class="profile-card blue">
+          <div class="card-head"><ion-icon name="person-circle-outline"></ion-icon><h2>Identity</h2></div>
+          <dl>
+            <div><dt>Full name</dt><dd>{{ admin.name || 'Not set' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ admin.email || 'Not set' }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ admin.phone || 'Not set' }}</dd></div>
+            <div><dt>Role</dt><dd>{{ admin.role | titlecase }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="profile-card green">
+          <div class="card-head"><ion-icon name="shield-checkmark-outline"></ion-icon><h2>Workspace Access</h2></div>
+          <div class="permission-list">
+            <span *ngFor="let permission of admin.workspace.permissions"><ion-icon name="checkmark-circle-outline"></ion-icon>{{ label(permission) }}</span>
+          </div>
+        </article>
+
+        <article class="profile-card purple wide">
+          <div class="card-head"><ion-icon name="apps-outline"></ion-icon><h2>Admin workspace</h2></div>
+          <div class="workspace-grid">
+            <a *ngFor="let page of admin.workspace.pages" [href]="page.route" (click)="$event.preventDefault(); go(page.route)">
+              <ion-icon [name]="page.icon"></ion-icon>
+              <span>{{ page.label }}</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="profile-card amber">
+          <div class="card-head"><ion-icon name="time-outline"></ion-icon><h2>Account History</h2></div>
+          <dl>
+            <div><dt>Created</dt><dd>{{ displayDate(admin.createdAt) }}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ displayDate(admin.updatedAt) }}</dd></div>
+            <div><dt>Default landing</dt><dd>{{ admin.workspace.landingRoute }}</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="empty-card" *ngIf="!loading && !profile && !error">
+        <ion-icon name="person-circle-outline"></ion-icon>
+        <p>No admin profile loaded yet.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="dashboard"></app-admin-nav>
+</div>

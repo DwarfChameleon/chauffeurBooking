@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
-const { register, login, refresh, verifyForgotPassword, resetForgotPassword } = require("../controllers/authController");
+const auth = require("../middleware/authMiddleware");
+const { register, login, refresh, verifyForgotPassword, resetForgotPassword, changePassword } = require("../controllers/authController");
 const router = express.Router();
 
 // Set up multer storage (optional: adjust destination & filename as needed)
@@ -13,5 +14,6 @@ router.post("/login", login);
 router.post("/refresh", refresh);
 router.post("/forgot-password/verify", verifyForgotPassword);
 router.post("/forgot-password/reset", resetForgotPassword);
+router.patch("/change-password", auth, changePassword);
 
 module.exports = router;

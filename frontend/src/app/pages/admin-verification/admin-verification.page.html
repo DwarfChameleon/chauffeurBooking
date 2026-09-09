@@ -1,0 +1,42 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Verification" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <p class="eyebrow">Trust and safety</p><h1>Document verification</h1>
+      <p class="state error" *ngIf="error">{{ error }}</p>
+
+      <section class="list-panel">
+        <article class="verify-card" *ngFor="let driver of drivers">
+          <div class="avatar green"><ion-icon name="car-sport-outline"></ion-icon></div>
+          <div class="body"><strong>{{ driver.name || 'Unnamed chauffeur' }}</strong><small>{{ driver.email || driver.phone || 'No contact' }}</small></div>
+          <div class="doc-grid">
+            <div class="doc-control" *ngFor="let doc of driverDocs">
+              <span><ion-icon [name]="doc.icon"></ion-icon>{{ doc.label }}</span>
+              <a *ngIf="driver.documents?.[doc.key]?.reference" [href]="driver.documents?.[doc.key]?.reference" target="_blank" rel="noreferrer">View</a>
+              <select [value]="driver.documents?.[doc.key]?.status || 'missing'" (change)="updateDriver(driver, doc.key, $any($event.target).value)">
+                <option value="missing">Missing</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+        </article>
+
+        <article class="verify-card" *ngFor="let employer of employers">
+          <div class="avatar purple"><ion-icon name="business-outline"></ion-icon></div>
+          <div class="body"><strong>{{ employer.employerProfile?.companyName || employer.name || 'Unnamed employer' }}</strong><small>{{ employer.email || employer.phone || 'No contact' }}</small></div>
+          <div class="doc-grid employer-doc-grid">
+            <div class="doc-control" *ngFor="let doc of employerDocs">
+              <span><ion-icon [name]="doc.icon"></ion-icon>{{ doc.label }}</span>
+              <a *ngIf="employer.employerProfile?.documents?.[doc.key]?.reference" [href]="employer.employerProfile?.documents?.[doc.key]?.reference" target="_blank" rel="noreferrer">View</a>
+              <select [value]="employer.employerProfile?.documents?.[doc.key]?.status || 'missing'" (change)="updateEmployer(employer, doc.key, $any($event.target).value)">
+                <option value="missing">Missing</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!loading && !drivers.length && !employers.length">No documents in review yet.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="verification"></app-admin-nav>
+</div>

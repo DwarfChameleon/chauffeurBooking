@@ -1,0 +1,171 @@
+<div class="employer-page">
+  <app-workspace-header role="employer" title="Bookings" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="page-shell">
+      <section class="page-intro"><div><p class="eyebrow">Bookings</p><h1>Request and history</h1><span>Book chauffeurs and track recent employer requests.</span></div></section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <p class="state success" *ngIf="success">{{ success }}</p>
+
+      <section class="booking-layout">
+        <article class="panel request-panel">
+          <div class="panel-head"><div><p class="eyebrow">New booking</p><h2>{{ selectedDriver ? selectedDriver.name : 'Choose a chauffeur' }}</h2></div><ion-icon name="calendar-outline"></ion-icon></div>
+          <div class="booking-start" *ngIf="!showBookingForm">
+            <div class="start-icon"><ion-icon name="car-sport-outline"></ion-icon></div>
+            <h3>Book New Chauffeur</h3>
+            <p>Select a verified nearby driver first, then complete pickup, destination and timing details.</p>
+            <div class="start-actions">
+              <button class="primary-button" type="button" (click)="startNewBooking()"><ion-icon name="add-circle-outline"></ion-icon> Book New Chauffeur</button>
+              <button class="ghost-button" type="button" (click)="navigate('/employer/chauffeurs')"><ion-icon name="people-outline"></ion-icon> Choose from directory</button>
+            </div>
+          </div>
+          <ng-container *ngIf="showBookingForm">
+          <div class="selected-driver" *ngIf="selectedDriver">
+            <img *ngIf="selectedDriver.picture; else driverFallback" [src]="selectedDriver.picture" alt="">
+            <ng-template #driverFallback><span><ion-icon name="person-circle-outline"></ion-icon></span></ng-template>
+            <div><strong>{{ selectedDriver.experienceLevel }}</strong><p>{{ selectedDriver.distanceLabel }} · {{ selectedDriver.safetyLevel }}</p></div>
+          </div>
+          <div class="select-driver-callout" *ngIf="!selectedDriver">
+            <div><strong>No chauffeur selected</strong><p>Pick a nearby chauffeur before submitting the booking request.</p></div>
+            <button class="ghost-button tight" type="button" (click)="navigate('/employer/chauffeurs')"><ion-icon name="people-outline"></ion-icon> Choose chauffeur</button>
+          </div>
+          <div class="form-grid">
+            <label>Pickup address<textarea [(ngModel)]="form.pickupAddress" rows="3" placeholder="Office, hotel, home, or dispatch point"></textarea><button class="location-button" type="button" (click)="captureEmployerLocation()"><ion-icon name="locate-outline"></ion-icon>{{ employerLocation ? 'Location shared' : 'Capture/share my location' }}</button></label>
+            <label class="wide">Destination address<textarea [(ngModel)]="form.destinationAddress" rows="3" placeholder="Drop-off point, delivery address, or route destination"></textarea></label>
+            <label>Service type<select [(ngModel)]="form.serviceType"><option value="chauffeur">Chauffeur booking</option><option value="emergency_dispatch">Emergency dispatch</option><option value="ride_hailing">Ride-hailing</option><option value="logistics">Logistics</option><option value="field_verification">Field verification</option></select></label>
+            <label>Urgency<select [(ngModel)]="form.urgency"><option value="standard">Standard</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></label>
+            <div class="trip-scope wide">
+              <span>Trip coverage</span>
+              <div class="scope-toggle">
+                <button type="button" [class.active]="form.tripScope === 'local'" (click)="setTripScope('local')">Local</button>
+                <button type="button" [class.active]="form.tripScope === 'interstate'" (click)="setTripScope('interstate')">Inter-state</button>
+              </div>
+            </div>
+            <label *ngIf="form.tripScope === 'interstate'">Service state<select [(ngModel)]="form.routeState" (ngModelChange)="onRouteStateChange()"><option value="">Select service state</option><option *ngFor="let state of interstateStates" [value]="state">{{ state }}</option></select></label>
+            <label>Time<input [(ngModel)]="form.dateTime" type="datetime-local"></label>
+            <label class="wide">Notes<textarea [(ngModel)]="form.notes" rows="3" placeholder="Destination, route, passenger notes, or special instruction"></textarea></label>
+          </div>
+          <div class="route-warning" *ngIf="routeMismatchMessage">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <div><strong>{{ routeMismatchMessage }}</strong><p>Select another chauffeur with {{ form.routeState }} route coverage.</p></div>
+            <button class="ghost-button tight" type="button" (click)="showRouteSuggestions = true">Select another driver</button>
+          </div>
+          <div class="route-suggestions" *ngIf="showRouteSuggestions && form.tripScope === 'interstate'">
+            <button class="driver-row" type="button" *ngFor="let driver of suggestedRouteDrivers" (click)="selectDriver(driver)">
+              <img *ngIf="driver.picture; else suggestedFallback" [src]="driver.picture" alt="">
+              <ng-template #suggestedFallback><span><ion-icon name="person-circle-outline"></ion-icon></span></ng-template>
+              <div><strong>{{ driver.name }}</strong><p>{{ driverRouteSummary(driver) }}</p></div>
+              <small>{{ driver.rating === null ? 'New' : (driver.rating | number:'1.1-1') }}</small>
+            </button>
+            <p class="empty compact" *ngIf="suggestedRouteDrivers.length === 0">No available chauffeur currently lists {{ form.routeState || 'that state' }} route coverage.</p>
+          </div>
+          <ion-button expand="block" (click)="dispatch()" [disabled]="dispatching || !selectedDriver || hasRouteMismatch">{{ dispatching ? 'Submitting...' : 'Submit booking request' }}</ion-button>
+          </ng-container>
+        </article>
+
+        <aside class="panel current-panel">
+          <div class="panel-head"><div><p class="eyebrow">Current booking</p><h2>{{ currentBooking ? currentBooking.driverName : 'None active' }}</h2></div><ion-icon name="briefcase-outline"></ion-icon></div>
+          <ng-container *ngIf="currentBooking; else noActive">
+            <p>{{ currentBooking.pickupAddress }}</p>
+            <div class="status-line"><span>{{ currentBooking.status }}</span><small>{{ currentBooking.displayDate }} · {{ currentBooking.displayTime }}</small></div>
+            <div class="current-actions">
+              <button class="ghost-button tight" type="button" *ngIf="currentBooking.routeUrl" (click)="openRoute(currentBooking)"><ion-icon name="map-outline"></ion-icon> View route</button>
+              <button class="success-button tight" type="button" *ngIf="currentBooking.status === 'arrived'" (click)="confirmDestination(currentBooking)" [disabled]="dispatching"><ion-icon name="checkmark-circle-outline"></ion-icon> Confirm Destination</button>
+            </div>
+          </ng-container>
+          <ng-template #noActive><p>No active employer booking at the moment.</p></ng-template>
+        </aside>
+      </section>
+
+      <section class="two-column">
+        <article class="panel">
+          <div class="panel-head"><div><p class="eyebrow">Available chauffeurs</p><h2>Select driver</h2></div><button class="link-button" type="button" (click)="navigate('/employer/chauffeurs')">Directory</button></div>
+          <button class="driver-row" [class.selected]="selectedDriver?.id === driver.id" type="button" *ngFor="let driver of drivers" (click)="selectDriver(driver)">
+            <img *ngIf="driver.picture; else miniFallback" [src]="driver.picture" alt="">
+            <ng-template #miniFallback><span><ion-icon name="person-circle-outline"></ion-icon></span></ng-template>
+            <div><strong>{{ driver.name }}</strong><p>{{ driver.distanceLabel }} · {{ driver.experienceLevel }}</p></div>
+            <small>{{ driver.rating === null ? 'New' : (driver.rating | number:'1.1-1') }}</small>
+          </button>
+          <div class="empty" *ngIf="drivers.length === 0">No available chauffeurs right now.</div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><div><p class="eyebrow">History</p><h2>Booking history</h2></div><ion-icon name="document-text-outline"></ion-icon></div>
+          <button class="history-row" type="button" *ngFor="let booking of history" (click)="openHistoryModal(booking)">
+            <span><ion-icon name="time-outline"></ion-icon></span>
+            <div><strong>{{ booking.driverName }}</strong><p>{{ booking.pickupAddress }}</p></div>
+            <small>{{ relativeBookingTime(booking) }}<br>{{ statusLabel(booking.status) }}</small>
+          </button>
+          <div class="empty" *ngIf="history.length === 0">No booking history yet.</div>
+        </article>
+      </section>
+    </main>
+  </ion-content>
+  <app-employer-nav active="bookings"></app-employer-nav>
+
+  <ion-modal [isOpen]="historyModalOpen" [initialBreakpoint]="0.72" [breakpoints]="[0, 0.5, 0.72, 0.95]" handle="true" handleBehavior="drag" (didDismiss)="closeHistoryModal()">
+    <ng-template>
+      <div class="booking-detail-sheet" *ngIf="selectedHistoryBooking as booking">
+        <div class="modal-drag-grip" aria-hidden="true"><span></span><span></span><span></span></div>
+        <header class="sheet-head">
+          <div>
+            <p class="eyebrow">Booking details</p>
+            <h2>{{ booking.driverName }}</h2>
+            <span class="sheet-status" [ngClass]="booking.status">{{ statusLabel(booking.status) }}</span>
+          </div>
+          <button class="modal-close" type="button" (click)="closeHistoryModal()" aria-label="Close booking details"><ion-icon name="close-outline"></ion-icon></button>
+        </header>
+
+        <section class="driver-summary">
+          <img *ngIf="booking.driverPicture; else sheetDriverFallback" [src]="booking.driverPicture" alt="">
+          <ng-template #sheetDriverFallback><span><ion-icon name="person-circle-outline"></ion-icon></span></ng-template>
+          <div>
+            <strong>{{ booking.driverName }}</strong>
+            <p>{{ serviceLabel(booking.serviceType) }} · {{ booking.urgency | titlecase }}</p>
+          </div>
+        </section>
+
+        <section class="detail-grid">
+          <article><ion-icon name="calendar-outline"></ion-icon><span>Date</span><strong>{{ booking.displayDate }}</strong></article>
+          <article><ion-icon name="time-outline"></ion-icon><span>Time</span><strong>{{ booking.displayTime }}</strong></article>
+          <article><ion-icon name="briefcase-outline"></ion-icon><span>Status</span><strong>{{ statusLabel(booking.status) }}</strong></article>
+          <article><ion-icon name="time-outline"></ion-icon><span>Updated</span><strong>{{ relativeBookingTime(booking) }}</strong></article>
+        </section>
+
+        <section class="trip-timeline">
+          <span><ion-icon name="checkmark-circle-outline"></ion-icon>Accepted: {{ exactEventTime(booking.acceptedAt, 'Not accepted yet') }}</span>
+          <span><ion-icon name="play-circle-outline"></ion-icon>Started: {{ exactEventTime(booking.startedAt, 'Not started yet') }}</span>
+          <span><ion-icon name="flag-outline"></ion-icon>Arrived: {{ exactEventTime(booking.arrivedAt, 'Not arrived yet') }}</span>
+        </section>
+
+        <section class="route-details">
+          <div class="route-point pickup"><ion-icon name="location-outline"></ion-icon><div><span>Pickup</span><strong>{{ booking.pickupAddress || 'Pickup location pending' }}</strong></div></div>
+          <div class="route-line"></div>
+          <div class="route-point destination"><ion-icon name="navigate-outline"></ion-icon><div><span>Destination</span><strong>{{ booking.destinationAddress || booking.notes || 'Destination pending' }}</strong></div></div>
+        </section>
+
+        <section class="notes-card">
+          <span>Route / instruction</span>
+          <p>{{ booking.notes || 'No extra instruction added for this booking.' }}</p>
+        </section>
+
+        <div class="sheet-actions">
+          <button class="ghost-button" type="button" *ngIf="booking.routeUrl" (click)="openRoute(booking)"><ion-icon name="map-outline"></ion-icon> View route</button>
+          <button class="success-button" type="button" *ngIf="booking.status === 'arrived'" (click)="confirmDestination(booking)" [disabled]="dispatching"><ion-icon name="checkmark-circle-outline"></ion-icon> Confirm Destination</button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+  <app-route-map-modal
+    [isOpen]="routeModalOpen"
+    [driverCoordinates]="selectedRouteBooking?.driverCoordinates"
+    [pickupCoordinates]="selectedRouteBooking?.employerCoordinates"
+    [status]="selectedRouteBooking?.status || ''"
+    [driverLabel]="selectedRouteBooking?.driverName || 'Driver'"
+    [pickupLabel]="selectedRouteBooking?.pickupAddress || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destinationAddress || ''"
+    [routeTitle]="selectedRouteBooking ? selectedRouteBooking.pickupAddress + ' to ' + selectedRouteBooking.driverName : 'Requested route'"
+    (close)="closeRouteMap()">
+  </app-route-map-modal>
+</div>

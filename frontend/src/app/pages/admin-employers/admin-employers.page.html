@@ -1,0 +1,19 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Employers" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <p class="eyebrow">Employer accounts</p><h1>Employer profiles</h1>
+      <ion-searchbar placeholder="Search employer, city or state" (ionInput)="query = $any($event.target).value || ''"></ion-searchbar>
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <section class="list-panel">
+        <article class="user-card" *ngFor="let user of filteredEmployers">
+          <div class="avatar purple"><ion-icon name="business-outline"></ion-icon></div>
+          <div class="body"><strong>{{ user.employerProfile?.companyName || user.name || 'Unnamed employer' }}</strong><small>{{ user.email || user.phone || 'No contact' }} • {{ user.employerProfile?.city || 'City not set' }}, {{ user.employerProfile?.state || 'State not set' }}</small><span>{{ user.employerProfile?.accountType || 'type not set' }}</span></div>
+        </article>
+        <p class="empty" *ngIf="!loading && !filteredEmployers.length">No employers found.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="users"></app-admin-nav>
+</div>

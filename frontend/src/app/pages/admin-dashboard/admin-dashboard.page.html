@@ -1,0 +1,71 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Admin" [showMenu]="true" [notificationCount]="notificationCount" (refreshRequested)="load(false)"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Pull to refresh" refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <section class="admin-hero">
+        <p class="eyebrow">BJED Chauffeur control room</p>
+        <h1>Operations dashboard</h1>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+
+      <section class="metric-grid">
+        <article class="metric-card blue" (click)="go('/admin/users')"><ion-icon name="people-outline"></ion-icon><span>Users</span><strong>{{ overview?.summary?.users || 0 }}</strong></article>
+        <article class="metric-card green" (click)="go('/admin/drivers')"><ion-icon name="car-sport-outline"></ion-icon><span>Available drivers</span><strong>{{ overview?.summary?.availableDrivers || 0 }}</strong></article>
+        <article class="metric-card amber" (click)="go('/admin/bookings')"><ion-icon name="calendar-outline"></ion-icon><span>Active bookings</span><strong>{{ overview?.summary?.activeBookings || 0 }}</strong></article>
+        <article class="metric-card live" (click)="go('/admin/bookings')"><span class="live-dot"></span><ion-icon name="radio-outline"></ion-icon><span>Live trips</span><strong>{{ overview?.summary?.liveTrips || 0 }}</strong></article>
+        <article class="metric-card purple" (click)="go('/admin/verification')"><ion-icon name="shield-checkmark-outline"></ion-icon><span>Pending docs</span><strong>{{ overview?.summary?.pendingDocuments || 0 }}</strong></article>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-title"><div><p class="eyebrow">Live work</p><h2>Recent bookings</h2></div><button type="button" (click)="go('/admin/bookings')">View all</button></div>
+        <button class="booking-row" *ngFor="let booking of overview?.recentBookings || []" type="button" (click)="openBooking(booking)">
+          <span><strong><i class="inline-live-dot" *ngIf="booking.isLiveTrip"></i>{{ booking.employerName }}</strong><small>{{ booking.pickupAddress || 'Pickup pending' }} to {{ booking.destinationAddress || 'destination pending' }}</small><small class="relative-line"><ion-icon name="time-outline"></ion-icon>{{ relativeBookingTime(booking) }}</small></span>
+          <em class="status-badge" [ngClass]="booking.status">{{ booking.status }}</em>
+        </button>
+        <p class="empty" *ngIf="!loading && !(overview?.recentBookings || []).length">No bookings yet.</p>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-title"><div><p class="eyebrow">Attention</p><h2>Admin alerts</h2></div><button type="button" (click)="go('/admin/notifications')">Open</button></div>
+        <article class="notice-card" *ngFor="let notice of overview?.notifications || []"><ion-icon [name]="noticeIcon(notice.type)"></ion-icon><span><strong>{{ notice.title }}</strong><small>{{ notice.body }}</small></span></article>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="dashboard"></app-admin-nav>
+  <ion-modal [isOpen]="bookingModalOpen" [initialBreakpoint]="0.78" [breakpoints]="[0, 0.5, 0.78, 0.96]" handle="true" handleBehavior="drag" (didDismiss)="closeBooking()">
+    <ng-template>
+      <div class="booking-sheet" *ngIf="selectedBooking as booking">
+        <header>
+          <div>
+            <p class="eyebrow">Trip details</p>
+            <h2><span class="inline-live-dot" *ngIf="booking.isLiveTrip"></span>{{ booking.employerName }} to {{ booking.driverName }}</h2>
+          </div>
+          <button class="sheet-close" type="button" (click)="closeBooking()"><ion-icon name="close-outline"></ion-icon></button>
+        </header>
+        <div class="sheet-grid">
+          <article><span>Status</span><strong>{{ booking.status }}</strong></article>
+          <article><span>Service</span><strong>{{ booking.serviceType }}</strong></article>
+          <article><span>Driver</span><strong>{{ booking.driverName }}</strong><small>{{ booking.driverPhone || booking.driverEmail || 'No contact' }}</small></article>
+          <article><span>Employer</span><strong>{{ booking.employerName }}</strong><small>{{ booking.employerPhone || booking.employerEmail || 'No contact' }}</small></article>
+        </div>
+        <div class="route-box"><p><ion-icon name="location-outline"></ion-icon><strong>Pickup</strong><span>{{ booking.pickupAddress || 'Pickup pending' }}</span></p><p><ion-icon name="navigate-outline"></ion-icon><strong>Destination</strong><span>{{ booking.destinationAddress || 'Destination pending' }}</span></p></div>
+        <article class="notes-box"><span>Driver note</span><p>{{ booking.notes || 'No note added.' }}</p></article>
+        <div class="timeline-row"><span><ion-icon name="checkmark-circle-outline"></ion-icon>Accepted: {{ exactEventTime(booking.acceptedAt, 'Not accepted yet') }}</span><span><ion-icon name="play-circle-outline"></ion-icon>Started: {{ exactEventTime(booking.startedAt, 'Not started yet') }}</span><span><ion-icon name="flag-outline"></ion-icon>Arrived: {{ exactEventTime(booking.arrivedAt, 'Not arrived yet') }}</span></div>
+        <button class="route-button secondary" type="button" *ngIf="booking.routeUrl" (click)="openRoute(booking)"><ion-icon name="map-outline"></ion-icon>View route</button>
+      </div>
+    </ng-template>
+  </ion-modal>
+  <app-route-map-modal
+    [isOpen]="routeModalOpen"
+    [driverCoordinates]="selectedRouteBooking?.driverCoordinates"
+    [pickupCoordinates]="selectedRouteBooking?.employerCoordinates"
+    [status]="selectedRouteBooking?.status || ''"
+    [driverLabel]="selectedRouteBooking?.driverName || 'Driver'"
+    [pickupLabel]="selectedRouteBooking?.pickupAddress || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destinationAddress || ''"
+    [routeTitle]="selectedRouteBooking ? selectedRouteBooking.employerName + ' to ' + selectedRouteBooking.driverName : 'Requested route'"
+    (close)="closeRouteMap()">
+  </app-route-map-modal>
+</div>

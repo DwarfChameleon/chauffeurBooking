@@ -1,0 +1,347 @@
+:host {
+  display: block;
+  --bg: #f4f7fb;
+  --panel: #fff;
+  --ink: #172033;
+  --muted: #66758b;
+  --line: #dfe7f2;
+  --blue: #1954d1;
+  --green: #12805c;
+  --amber: #c39454;
+}
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+ion-content {
+  --background: var(--bg);
+  --color: var(--ink);
+}
+
+.settings-shell {
+  width: min(760px, 100%);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 18px 14px calc(env(safe-area-inset-bottom) + 28px);
+}
+
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(195, 148, 84, .24);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(195, 148, 84, .16), rgba(255, 255, 255, .94));
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+}
+
+.avatar {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #fff;
+  background: linear-gradient(135deg, #061b38, #0d315c);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+.account-hero h1 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1.16;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.account-hero span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.settings-section {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .045);
+}
+
+.section-title {
+  margin-bottom: 10px;
+}
+
+.section-title h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.setting-row {
+  width: 100%;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border: 0;
+  border-top: 1px solid #edf1f6;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.setting-row:first-of-type {
+  border-top: 0;
+}
+
+.setting-row > ion-icon {
+  color: #9aa7b8;
+  font-size: 19px;
+}
+
+.setting-row strong {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.setting-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.row-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--amber);
+  background: rgba(195, 148, 84, .14);
+}
+
+.row-icon ion-icon {
+  font-size: 22px;
+}
+
+.row-icon.blue {
+  color: var(--blue);
+  background: rgba(25, 84, 209, .12);
+}
+
+.row-icon.green {
+  color: var(--green);
+  background: rgba(18, 128, 92, .12);
+}
+
+.row-icon.amber {
+  color: #a66d24;
+  background: rgba(195, 148, 84, .16);
+}
+
+.toggle-row {
+  cursor: default;
+}
+
+.toggle-row ion-toggle {
+  justify-self: end;
+  --track-background: #d9e1ed;
+  --track-background-checked: rgba(195, 148, 84, .38);
+  --handle-background: #fff;
+  --handle-background-checked: var(--amber);
+}
+
+.password-panel {
+  display: grid;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfe;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+input:focus {
+  outline: 0;
+  border-color: rgba(195, 148, 84, .72);
+  box-shadow: 0 0 0 4px rgba(195, 148, 84, .09);
+  background: #fff;
+}
+
+.state {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.state ion-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  font-size: 18px;
+}
+
+.state.error {
+  background: rgba(217, 45, 32, .06);
+  color: #b42318;
+}
+
+.state.error ion-icon {
+  color: #d92d20;
+}
+
+.state.success {
+  background: rgba(18, 128, 92, .08);
+  color: #12805c;
+}
+
+.save-password {
+  height: 52px;
+  margin: 2px 0 0;
+  --border-radius: 8px;
+  --background: linear-gradient(135deg, #061b38, #0d315c);
+  --color: #fff;
+  --box-shadow: 0 10px 24px rgba(7, 22, 46, .16);
+  text-transform: none;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.save-password ion-spinner {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  color: #fff;
+}
+
+.signout-button {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: #fff0ee;
+  color: #b42318;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.signout-button ion-icon {
+  font-size: 20px;
+}
+
+:host-context(body.dark-theme) {
+  --bg: #070b13;
+  --panel: #0d1420;
+  --ink: #f8fafc;
+  --muted: #a8b3c7;
+  --line: rgba(255, 255, 255, .12);
+}
+
+:host-context(body.driver-dark-theme) .driver-settings {
+  --bg: #070b13;
+  --panel: #0d1420;
+  --ink: #f8fafc;
+  --muted: #a8b3c7;
+  --line: rgba(255, 255, 255, .12);
+  --blue: #8ab4ff;
+  --green: #4ade80;
+}
+
+:host-context(body.driver-light-theme) .driver-settings {
+  --bg: #f4f7fb;
+  --panel: #fff;
+  --ink: #172033;
+  --muted: #66758b;
+  --line: #dfe7f2;
+}
+
+:host-context(body.dark-theme) .account-hero,
+:host-context(body.driver-dark-theme) .driver-settings .account-hero {
+  background: linear-gradient(135deg, rgba(195, 148, 84, .18), rgba(13, 20, 32, .95));
+}
+
+:host-context(body.dark-theme) input,
+:host-context(body.driver-dark-theme) .driver-settings input {
+  background: #111927;
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, .14);
+}
+
+@media (min-width: 700px) {
+  .settings-shell {
+    padding-top: 24px;
+  }
+
+  .password-panel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .password-panel .state,
+  .password-panel .save-password {
+    grid-column: 1 / -1;
+  }
+}

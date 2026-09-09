@@ -420,7 +420,7 @@ function serializeBooking(booking) {
     serviceType: booking.serviceType,
     urgency: booking.urgency,
     status: booking.status,
-    isLiveTrip: booking.status === "started",
+    isLiveTrip: LIVE_TRIP_STATUSES.includes(booking.status),
     pickupAddress: booking.pickupLocation?.address || "",
     destinationAddress: booking.destinationLocation?.address || "",
     notes: booking.notes || "",

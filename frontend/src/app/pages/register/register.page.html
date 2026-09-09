@@ -1,0 +1,46 @@
+<ion-header class="auth-header">
+  <ion-toolbar>
+    <ion-buttons slot="start"><ion-button fill="clear" (click)="back()"><ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon></ion-button></ion-buttons>
+    <ion-title>Sign up</ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <main class="register-shell">
+    <section class="register-card">
+      <p class="eyebrow">Create account</p>
+      <h1>{{ step === 'role' ? 'Choose your role' : step === 'employerType' ? 'Employer type' : roleLabel + ' registration' }}</h1>
+
+      <ng-container *ngIf="step === 'role'; else nextStep">
+        <div class="role-grid">
+          <button class="role-card" [class.active]="role === 'driver'" type="button" (click)="chooseRole('driver')"><ion-icon name="car-sport-outline"></ion-icon><strong>Chauffeur</strong><span>Drive, receive bookings, update routes and documents.</span></button>
+          <button class="role-card" [class.active]="role === 'user'" type="button" (click)="chooseRole('user')"><ion-icon name="business-outline"></ion-icon><strong>Employer</strong><span>Book chauffeurs, manage requests and verify profile.</span></button>
+        </div>
+        <ion-button expand="block" (click)="continueFromRole()">Continue</ion-button>
+      </ng-container>
+
+      <ng-template #nextStep>
+        <ng-container *ngIf="step === 'employerType'; else formStep">
+          <button class="back-link" type="button" (click)="step = 'role'"><ion-icon name="arrow-back-outline"></ion-icon> Change role</button>
+          <div class="account-type-grid">
+            <button class="account-type-button" [class.active]="employerType === 'personal'" type="button" (click)="employerType = 'personal'"><ion-icon name="person-outline"></ion-icon><strong>Personal</strong><span>Book chauffeurs for individual errands, family, or personal movement.</span></button>
+            <button class="account-type-button" [class.active]="employerType === 'organization'" type="button" (click)="employerType = 'organization'"><ion-icon name="business-outline"></ion-icon><strong>Organization</strong><span>Book chauffeurs for company, logistics, operations, or field teams.</span></button>
+          </div>
+          <ion-button expand="block" (click)="step = 'form'">Continue</ion-button>
+        </ng-container>
+
+        <ng-template #formStep>
+          <button class="back-link" type="button" (click)="backFromForm()"><ion-icon name="arrow-back-outline"></ion-icon> Change {{ role === 'user' ? 'employer type' : 'role' }}</button>
+          <ion-item><ion-label position="stacked">Full name</ion-label><ion-input [(ngModel)]="name" /></ion-item>
+          <ion-item><ion-label position="stacked">Email</ion-label><ion-input [(ngModel)]="email" type="email" /></ion-item>
+          <ion-item [class.invalid-phone]="!phoneIsValid"><ion-label position="stacked">Phone</ion-label><ion-input [(ngModel)]="phone" type="tel" /></ion-item>
+          <ion-note color="danger" *ngIf="!phoneIsValid">{{ phoneError }}</ion-note>
+          <ion-item><ion-label position="stacked">Password</ion-label><ion-input [(ngModel)]="password" type="password" /></ion-item>
+          <ion-note color="danger" *ngIf="error">{{ error }}</ion-note>
+          <ion-button expand="block" (click)="submit()" [disabled]="busy">{{ busy ? 'Creating...' : 'Create ' + roleLabel + ' account' }}</ion-button>
+        </ng-template>
+      </ng-template>
+
+      <p class="muted">Already registered? <a routerLink="/login">Sign in</a></p>
+    </section>
+  </main>
+</ion-content>

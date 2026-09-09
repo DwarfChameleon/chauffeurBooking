@@ -1,0 +1,126 @@
+<div class="settings-page" [class.driver-settings]="role === 'driver'">
+  <app-workspace-header [role]="role" title="Settings" [showMenu]="true"></app-workspace-header>
+
+  <ion-content>
+    <main class="settings-shell">
+      <section class="account-hero">
+        <div class="avatar">{{ initials }}</div>
+        <div>
+          <p class="eyebrow">{{ roleLabel }} account</p>
+          <h1>{{ displayName }}</h1>
+          <span>{{ contactLabel }}</span>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <div class="section-title">
+          <p class="eyebrow">Account</p>
+          <h2>Profile and access</h2>
+        </div>
+
+        <button class="setting-row" type="button" (click)="go(profilePath)">
+          <span class="row-icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+          <span><strong>Edit profile</strong><small>Update contact, emergency contact, and documents.</small></span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+
+        <button class="setting-row" type="button" (click)="go(notificationPath)">
+          <span class="row-icon blue"><ion-icon name="notifications-outline"></ion-icon></span>
+          <span><strong>Notifications</strong><small>Review booking, profile, and admin updates.</small></span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </section>
+
+      <section class="settings-section">
+        <div class="section-title">
+          <p class="eyebrow">Preferences</p>
+          <h2>App behavior</h2>
+        </div>
+
+        <div class="setting-row toggle-row">
+          <span class="row-icon amber"><ion-icon [name]="isDark ? 'moon-outline' : 'sunny-outline'"></ion-icon></span>
+          <span><strong>{{ isDark ? 'Dark mode' : 'Light mode' }}</strong><small>{{ role === 'driver' ? 'Driver workspace theme' : 'Workspace theme' }}</small></span>
+          <ion-toggle [checked]="isDark" (ionChange)="toggleTheme()"></ion-toggle>
+        </div>
+
+        <div class="setting-row toggle-row">
+          <span class="row-icon green"><ion-icon name="notifications-outline"></ion-icon></span>
+          <span><strong>Push alerts</strong><small>Booking and account alerts on this device.</small></span>
+          <ion-toggle [(ngModel)]="pushAlerts" (ionChange)="savePreferences()"></ion-toggle>
+        </div>
+
+        <div class="setting-row toggle-row">
+          <span class="row-icon"><ion-icon name="mail-outline"></ion-icon></span>
+          <span><strong>Email updates</strong><small>Receipts, verification notes, and account notices.</small></span>
+          <ion-toggle [(ngModel)]="emailUpdates" (ionChange)="savePreferences()"></ion-toggle>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <div class="section-title">
+          <p class="eyebrow">Security</p>
+          <h2>Change password</h2>
+        </div>
+
+        <div class="password-panel">
+          <label>Current password
+            <input [(ngModel)]="passwordForm.currentPassword" type="password" autocomplete="current-password">
+          </label>
+          <label>New password
+            <input [(ngModel)]="passwordForm.newPassword" type="password" autocomplete="new-password">
+          </label>
+          <label>Confirm new password
+            <input [(ngModel)]="passwordForm.confirmPassword" type="password" autocomplete="new-password">
+          </label>
+
+          <div class="state error" *ngIf="error">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <ion-note color="danger">{{ error }}</ion-note>
+          </div>
+          <div class="state success" *ngIf="success">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>{{ success }}</span>
+          </div>
+
+          <ion-button expand="block" class="save-password" [disabled]="busy" (click)="changePassword()">
+            <ion-spinner *ngIf="busy" name="crescent"></ion-spinner>
+            <span>{{ busy ? 'Saving...' : 'Update password' }}</span>
+          </ion-button>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <div class="section-title">
+          <p class="eyebrow">App</p>
+          <h2>Information</h2>
+        </div>
+
+        <button class="setting-row" type="button" (click)="markComingSoon('Terms and Conditions')">
+          <span class="row-icon"><ion-icon name="document-text-outline"></ion-icon></span>
+          <span><strong>Terms and Conditions</strong><small>App usage and service policies.</small></span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+        <button class="setting-row" type="button" (click)="markComingSoon('Privacy Policy')">
+          <span class="row-icon green"><ion-icon name="shield-checkmark-outline"></ion-icon></span>
+          <span><strong>Privacy Policy</strong><small>How account and trip data is handled.</small></span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+        <button class="setting-row" type="button" (click)="go('/support')">
+          <span class="row-icon blue"><ion-icon name="help-circle-outline"></ion-icon></span>
+          <span><strong>Support</strong><small>Contact the team or submit a support request.</small></span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+        <button class="setting-row" type="button" (click)="markComingSoon('About')">
+          <span class="row-icon blue"><ion-icon name="information-circle-outline"></ion-icon></span>
+          <span><strong>About B-JED Chauffeur</strong><small>Version 1.0.0</small></span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </section>
+
+      <button class="signout-button" type="button" (click)="auth.logout()">
+        <ion-icon name="log-out-outline"></ion-icon>
+        Sign out
+      </button>
+    </main>
+  </ion-content>
+</div>

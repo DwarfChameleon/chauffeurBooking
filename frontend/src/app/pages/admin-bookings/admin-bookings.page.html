@@ -1,0 +1,89 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Bookings" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <p class="eyebrow">Booking operations</p><h1>Booking control</h1>
+      <ion-searchbar placeholder="Search employer, driver, route or status" (ionInput)="query = $any($event.target).value || ''"></ion-searchbar>
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <section class="list-panel">
+        <article class="booking-card" *ngFor="let booking of filteredBookings" (click)="openBooking(booking)" tabindex="0" (keydown.enter)="openBooking(booking)">
+          <div class="avatar amber"><ion-icon name="calendar-outline"></ion-icon></div>
+          <div class="body">
+            <strong><i class="inline-live-dot" *ngIf="booking.isLiveTrip"></i>{{ booking.employerName }} to {{ booking.driverName }}</strong>
+            <small>{{ booking.pickupAddress || 'Pickup pending' }} to {{ booking.destinationAddress || 'destination pending' }}</small>
+            <span><ion-icon name="time-outline"></ion-icon>{{ relativeBookingTime(booking) }} • {{ booking.serviceType }}</span>
+          </div>
+          <div class="controls" (click)="$event.stopPropagation()">
+            <button class="icon-button call-control" type="button" *ngIf="canCall(booking)" (click)="openCallOptions(booking)" aria-label="Start live call">
+              <ion-icon name="call-outline"></ion-icon>
+            </button>
+            <i class="status-pill" [ngClass]="booking.status">{{ booking.status }}</i>
+            <select [value]="booking.status" (change)="setStatus(booking, $any($event.target).value)">
+              <option value="requested">Requested</option><option value="assigned">Assigned</option><option value="accepted">Accepted</option><option value="started">Started</option><option value="arrived">Arrived</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!loading && !filteredBookings.length">No bookings found.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="bookings"></app-admin-nav>
+  <ion-modal [isOpen]="bookingModalOpen" [initialBreakpoint]="0.78" [breakpoints]="[0, 0.5, 0.78, 0.96]" handle="true" handleBehavior="drag" (didDismiss)="closeBooking()">
+    <ng-template>
+      <div class="booking-sheet" *ngIf="selectedBooking as booking">
+        <header>
+          <div><p class="eyebrow">Trip details</p><h2><span class="inline-live-dot" *ngIf="booking.isLiveTrip"></span>{{ booking.employerName }} to {{ booking.driverName }}</h2></div>
+          <button class="sheet-close" type="button" (click)="closeBooking()"><ion-icon name="close-outline"></ion-icon></button>
+        </header>
+        <div class="sheet-grid">
+          <article><span>Status</span><strong>{{ booking.status }}</strong></article>
+          <article><span>Service</span><strong>{{ booking.serviceType }}</strong></article>
+          <article><span>Driver</span><strong>{{ booking.driverName }}</strong><small>{{ booking.driverPhone || booking.driverEmail || 'No contact' }}</small></article>
+          <article><span>Employer</span><strong>{{ booking.employerName }}</strong><small>{{ booking.employerPhone || booking.employerEmail || 'No contact' }}</small></article>
+        </div>
+        <div class="route-box"><p><ion-icon name="location-outline"></ion-icon><strong>Pickup</strong><span>{{ booking.pickupAddress || 'Pickup pending' }}</span></p><p><ion-icon name="navigate-outline"></ion-icon><strong>Destination</strong><span>{{ booking.destinationAddress || 'Destination pending' }}</span></p></div>
+        <article class="notes-box"><span>Driver note</span><p>{{ booking.notes || 'No note added.' }}</p></article>
+        <div class="timeline-row"><span><ion-icon name="checkmark-circle-outline"></ion-icon>Accepted: {{ exactEventTime(booking.acceptedAt, 'Not accepted yet') }}</span><span><ion-icon name="play-circle-outline"></ion-icon>Started: {{ exactEventTime(booking.startedAt, 'Not started yet') }}</span><span><ion-icon name="flag-outline"></ion-icon>Arrived: {{ exactEventTime(booking.arrivedAt, 'Not arrived yet') }}</span></div>
+        <button class="route-button call-button" type="button" *ngIf="canCall(booking)" (click)="openCallOptions(booking)"><ion-icon name="call-outline"></ion-icon>Start call</button>
+        <button class="route-button secondary" type="button" *ngIf="booking.routeUrl" (click)="openRoute(booking)"><ion-icon name="map-outline"></ion-icon>View route</button>
+      </div>
+    </ng-template>
+  </ion-modal>
+  <ion-modal [isOpen]="callModalOpen" [initialBreakpoint]="0.48" [breakpoints]="[0, 0.48, 0.72]" handle="true" handleBehavior="drag" (didDismiss)="closeCallOptions()">
+    <ng-template>
+      <div class="call-sheet" *ngIf="callBooking as booking">
+        <header>
+          <div>
+            <p class="eyebrow">Watchtower call</p>
+            <h2>{{ booking.employerName }} to {{ booking.driverName }}</h2>
+          </div>
+          <button class="sheet-close" type="button" [disabled]="callBusy" (click)="closeCallOptions()"><ion-icon name="close-outline"></ion-icon></button>
+        </header>
+
+        <div class="call-options">
+          <button *ngFor="let option of callOptions" class="call-option" type="button" [disabled]="callBusy" (click)="startWatchtowerCall(option.target)">
+            <span><ion-icon [name]="option.icon"></ion-icon></span>
+            <strong>{{ option.label }}</strong>
+            <small>{{ option.note }}</small>
+          </button>
+        </div>
+
+        <p class="call-state" *ngIf="callMessage">
+          <ion-icon [name]="callBusy ? 'sync-outline' : 'checkmark-circle-outline'"></ion-icon>{{ callMessage }}
+        </p>
+      </div>
+    </ng-template>
+  </ion-modal>
+  <app-route-map-modal
+    [isOpen]="routeModalOpen"
+    [driverCoordinates]="selectedRouteBooking?.driverCoordinates"
+    [pickupCoordinates]="selectedRouteBooking?.employerCoordinates"
+    [status]="selectedRouteBooking?.status || ''"
+    [driverLabel]="selectedRouteBooking?.driverName || 'Driver'"
+    [pickupLabel]="selectedRouteBooking?.pickupAddress || 'Employer pickup'"
+    [destinationLabel]="selectedRouteBooking?.destinationAddress || ''"
+    [routeTitle]="selectedRouteBooking ? selectedRouteBooking.employerName + ' to ' + selectedRouteBooking.driverName : 'Requested route'"
+    (close)="closeRouteMap()">
+  </app-route-map-modal>
+</div>

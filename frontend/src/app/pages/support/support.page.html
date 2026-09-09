@@ -1,0 +1,107 @@
+<div class="support-page" [class.driver-support]="role === 'driver'">
+  <app-workspace-header [role]="role" title="Support" [showMenu]="true"></app-workspace-header>
+
+  <ion-content>
+    <main class="support-shell">
+      <section class="support-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">{{ roleLabel }} support</p>
+          <h1>How can we help, {{ displayName }}?</h1>
+          <p>{{ introText }}</p>
+        </div>
+        <span class="hero-icon"><ion-icon name="headset-outline"></ion-icon></span>
+      </section>
+
+      <section class="quick-actions" aria-label="Support contact options">
+        <button *ngFor="let action of actions" class="action-button" [class]="action.tone" type="button" [disabled]="action.key === 'call' && callingSupport" (click)="handleAction(action.key)">
+          <span><ion-icon [name]="action.icon"></ion-icon></span>
+          <strong>{{ action.label }}</strong>
+          <small>{{ action.key === 'call' && callingSupport ? 'Ringing...' : action.note }}</small>
+        </button>
+      </section>
+
+      <section class="support-section emergency-section">
+        <span class="section-icon danger"><ion-icon name="warning-outline"></ion-icon></span>
+        <div>
+          <p class="eyebrow">Safety first</p>
+          <h2>Emergency or active trip concern</h2>
+          <p>Call support immediately for safety concerns. You can also submit a ticket with the safety category so it is marked urgent.</p>
+        </div>
+      </section>
+
+      <section class="support-section" id="support-form">
+        <div class="section-title">
+          <p class="eyebrow">Request help</p>
+          <h2>Create support ticket</h2>
+        </div>
+
+        <form class="ticket-form" (ngSubmit)="submitTicket()">
+          <label>
+            Category
+            <select [(ngModel)]="form.category" name="category" required>
+              <option value="" disabled>Select category</option>
+              <option *ngFor="let category of categories" [value]="category.value">{{ category.label }}</option>
+            </select>
+          </label>
+
+          <label>
+            Booking reference
+            <input [(ngModel)]="form.bookingReference" name="bookingReference" placeholder="Optional" autocomplete="off">
+          </label>
+
+          <label class="wide">
+            Subject
+            <input [(ngModel)]="form.subject" name="subject" placeholder="Short summary" autocomplete="off">
+          </label>
+
+          <label class="wide">
+            Message
+            <textarea [(ngModel)]="form.message" name="message" rows="5" placeholder="Describe what happened"></textarea>
+          </label>
+
+          <div class="state error" *ngIf="error">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <ion-note color="danger">{{ error }}</ion-note>
+          </div>
+
+          <div class="state success" *ngIf="success">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>{{ success }} <strong *ngIf="lastTicketNumber">Ticket {{ lastTicketNumber }}</strong></span>
+          </div>
+
+          <ion-button expand="block" type="submit" class="submit-button" [disabled]="busy">
+            <ion-spinner *ngIf="busy" name="crescent"></ion-spinner>
+            <span>{{ busy ? 'Submitting...' : 'Submit request' }}</span>
+          </ion-button>
+        </form>
+      </section>
+
+      <section class="support-section">
+        <div class="section-title">
+          <p class="eyebrow">Shortcuts</p>
+          <h2>Common places to check</h2>
+        </div>
+
+        <div class="shortcut-list">
+          <button *ngFor="let shortcut of shortcuts" class="shortcut-row" type="button" (click)="go(shortcut.route)">
+            <span class="row-icon"><ion-icon [name]="shortcut.icon"></ion-icon></span>
+            <span><strong>{{ shortcut.label }}</strong><small>{{ shortcut.note }}</small></span>
+            <ion-icon name="arrow-forward-outline"></ion-icon>
+          </button>
+        </div>
+      </section>
+
+      <section class="support-section">
+        <div class="section-title">
+          <p class="eyebrow">FAQ</p>
+          <h2>Fast answers</h2>
+        </div>
+
+        <details *ngFor="let faq of faqs" class="faq-item">
+          <summary>{{ faq.question }}</summary>
+          <p>{{ faq.answer }}</p>
+        </details>
+      </section>
+    </main>
+  </ion-content>
+</div>

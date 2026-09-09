@@ -1,0 +1,51 @@
+.admin-page ion-content { --background:var(--admin-bg,#f5f8fc); color:var(--admin-text,#101828); }
+.admin-shell { padding:18px 14px 92px; max-width:1040px; margin:0 auto; }
+.admin-hero h1 { margin:4px 0 0; font-size:24px; color:var(--admin-text,#101828); }
+.eyebrow { margin:0; color:#1954d1; font-size:11px; font-weight:900; text-transform:uppercase; }
+.metric-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-top:18px; }
+.metric-card { border:1px solid rgba(15,23,42,.08); border-radius:8px; padding:14px; display:grid; gap:8px; text-align:left; cursor:pointer; color:#0f172a; background:#fff; box-shadow:0 10px 28px rgba(15,23,42,.07); }
+.metric-card.live { position:relative; border-color:rgba(22,163,74,.3); background:linear-gradient(180deg,#ecfdf5,#fff 58%); }
+.metric-card ion-icon { width:34px; height:34px; padding:8px; border-radius:50%; color:#fff; }
+.metric-card span { font-size:12px; font-weight:800; color:#526071; }
+.metric-card strong { font-size:25px; }
+.metric-card.blue ion-icon { background:#1954d1; }.metric-card.green ion-icon { background:#16a34a; }.metric-card.amber ion-icon { background:#d97706; }.metric-card.purple ion-icon { background:#7c3aed; }.metric-card.live ion-icon { background:#16a34a; }
+.live-dot,.inline-live-dot { display:inline-block; border-radius:50%; background:#22c55e; box-shadow:0 0 0 6px rgba(34,197,94,.16); }
+.live-dot { position:absolute; top:12px; right:12px; width:10px; height:10px; }
+.inline-live-dot { width:9px; height:9px; margin-right:8px; vertical-align:middle; }
+.admin-panel { margin-top:16px; padding:14px; border:1px solid var(--admin-line,#dbe5f2); border-radius:8px; background:var(--admin-card,#fff); box-shadow:0 10px 28px rgba(15,23,42,.06); }
+.panel-title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:10px; }
+.panel-title h2 { margin:2px 0 0; font-size:17px; color:var(--admin-text,#101828); }
+.panel-title button { border:0; border-radius:8px; padding:9px 11px; background:rgba(25,84,209,.1); color:#1954d1; font-weight:900; }
+.booking-row { width:100%; display:flex; justify-content:space-between; gap:12px; align-items:center; border:0; border-top:1px solid var(--admin-line,#e5e7eb); background:transparent; padding:12px 0; text-align:left; color:var(--admin-text,#101828); }
+.booking-row strong,.booking-row small,.notice-card strong,.notice-card small { display:block; }
+.booking-row small,.notice-card small,.empty { color:var(--admin-muted,#667085); font-size:12px; margin-top:3px; }
+.relative-line { display:inline-flex !important; align-items:center; gap:5px; }
+.relative-line ion-icon { color:#1954d1; font-size:14px; }
+.status-badge { border-radius:999px; padding:5px 8px; font-size:10px; font-style:normal; font-weight:900; text-transform:uppercase; color:#334155; background:#e2e8f0; }
+.status-badge.requested,.status-badge.assigned,.status-badge.accepted,.status-badge.arrived { color:#92400e; background:#fef3c7; } .status-badge.started { color:#166534; background:#dcfce7; } .status-badge.completed { color:#166534; background:#dcfce7; } .status-badge.cancelled,.status-badge.rejected { color:#991b1b; background:#fee2e2; }
+.booking-sheet { min-height:100%; padding:20px; color:var(--admin-text,#101828); background:var(--admin-card,#fff); }
+.booking-sheet header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.booking-sheet h2 { margin:4px 0 0; font-size:19px; }
+.sheet-close { width:40px; height:40px; border:0; border-radius:50%; display:grid; place-items:center; color:var(--admin-text,#101828); background:rgba(148,163,184,.18); }
+.sheet-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.sheet-grid article,.notes-box,.route-box { border:1px solid var(--admin-line,#dbe5f2); border-radius:8px; padding:12px; background:rgba(148,163,184,.08); }
+.sheet-grid span,.notes-box span { display:block; color:var(--admin-muted,#667085); font-size:10px; font-weight:900; text-transform:uppercase; }
+.sheet-grid strong,.sheet-grid small { display:block; margin-top:4px; overflow-wrap:anywhere; }
+.route-box { margin:12px 0; display:grid; gap:10px; }
+.route-box p { display:flex; align-items:flex-start; gap:8px; margin:0; }
+.route-box ion-icon { color:#1954d1; font-size:20px; }
+.route-box strong { min-width:82px; }
+.route-box span { color:var(--admin-muted,#667085); overflow-wrap:anywhere; }
+.notes-box p { margin:6px 0 0; color:var(--admin-muted,#667085); }
+.timeline-row { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; color:var(--admin-muted,#667085); font-size:12px; }
+.timeline-row span { display:inline-flex; align-items:center; gap:5px; }
+.timeline-row ion-icon { color:#1954d1; font-size:15px; }
+.route-button { display:inline-flex; align-items:center; gap:7px; min-height:40px; border:0; border-radius:8px; padding:0 13px; color:#fff; background:#16a34a; font-weight:900; }
+.route-button.secondary { color:#1954d1; background:rgba(25,84,209,.1); }
+.notice-card { display:flex; gap:10px; align-items:flex-start; border-top:1px solid var(--admin-line,#e5e7eb); padding:12px 0; }
+.notice-card ion-icon { color:#1954d1; font-size:23px; }
+.state { padding:12px; }.error { color:#b91c1c; }
+:host-context(body.dark-theme) { --admin-bg:#070b13; --admin-card:#0d1420; --admin-line:rgba(255,255,255,.1); --admin-text:#f8fafc; --admin-muted:#b7c0cf; }
+:host-context(body.dark-theme) .metric-card { background:#111927; color:#f8fafc; border-color:rgba(255,255,255,.1); }
+:host-context(body.dark-theme) .metric-card span { color:#b7c0cf; }
+@media (max-width:760px) { .metric-grid,.sheet-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
