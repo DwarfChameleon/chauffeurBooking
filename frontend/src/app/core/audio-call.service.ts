@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 import { RealtimeService } from './realtime.service';
 
 type RuntimeEnv = { __env?: { iceServers?: RTCIceServer[] } };
@@ -9,16 +11,24 @@ type CallSignal =
 
 @Injectable({ providedIn: 'root' })
 export class AudioCallService {
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
   private readonly realtime = inject(RealtimeService);
   private readonly peerConnections = new Map<string, RTCPeerConnection>();
   private readonly audioElements = new Map<string, HTMLAudioElement>();
+  private readonly fallbackIceServers: RTCIceServer[] = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] },
+  ];
   private localStream: MediaStream | null = null;
+  private configuredIceServers = this.fallbackIceServers;
+  private iceServersPromise: Promise<RTCIceServer[]> | null = null;
   private sessionId = '';
   private localUserId = '';
 
   async prepare(sessionId: string, localUserId: string) {
     this.sessionId = sessionId;
     this.localUserId = localUserId;
+    this.configuredIceServers = await this.loadIceServers();
     await this.ensureLocalStream();
   }
 
@@ -92,7 +102,7 @@ export class AudioCallService {
     const existing = this.peerConnections.get(peerUserId);
     if (existing) return existing;
 
-    const peer = new RTCPeerConnection({ iceServers: this.iceServers });
+    const peer = new RTCPeerConnection({ iceServers: this.configuredIceServers });
     this.localStream?.getTracks().forEach((track) => peer.addTrack(track, this.localStream as MediaStream));
     peer.onicecandidate = (event) => {
       if (!event.candidate) return;
@@ -134,11 +144,41 @@ export class AudioCallService {
     this.audioElements.delete(peerUserId);
   }
 
-  private get iceServers(): RTCIceServer[] {
-    return (globalThis as RuntimeEnv).__env?.iceServers || [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' },
-    ];
+  private loadIceServers() {
+    if (this.iceServersPromise) return this.iceServersPromise;
+
+    this.iceServersPromise = this.fetchIceServers().catch(() => this.runtimeIceServers.length ? this.runtimeIceServers : this.fallbackIceServers);
+    return this.iceServersPromise;
+  }
+
+  private async fetchIceServers() {
+    const token = this.auth.session()?.token;
+    if (!token) return this.runtimeIceServers.length ? this.runtimeIceServers : this.fallbackIceServers;
+
+    const response = await this.api.get<{ iceServers: RTCIceServer[] }>('/calls/ice-servers', token);
+    const iceServers = this.normalizeIceServers(response.iceServers);
+    return iceServers.length ? iceServers : this.runtimeIceServers.length ? this.runtimeIceServers : this.fallbackIceServers;
+  }
+
+  private get runtimeIceServers() {
+    return this.normalizeIceServers((globalThis as RuntimeEnv).__env?.iceServers);
+  }
+
+  private normalizeIceServers(servers: unknown): RTCIceServer[] {
+    if (!Array.isArray(servers)) return [];
+    const normalized: RTCIceServer[] = [];
+    servers.forEach((server) => {
+      if (!server || typeof server !== 'object') return;
+        const candidate = server as RTCIceServer;
+        const urls = Array.isArray(candidate.urls) ? candidate.urls.filter(Boolean) : candidate.urls;
+      if (!urls || (Array.isArray(urls) && !urls.length)) return;
+      normalized.push({
+          urls,
+          username: candidate.username,
+          credential: candidate.credential,
+      });
+    });
+    return normalized;
   }
 
   private isCallSignal(value: unknown): value is CallSignal {

@@ -7,6 +7,7 @@ const path = require("path");
 const authRoutes = require("./routes/authRoutes");
 const driverRoutes = require("./routes/driverRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
+const callRoutes = require("./routes/callRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const administratorRoutes = require("./routes/administratorRoutes");
 const employerRoutes = require("./routes/employerRoutes");
@@ -97,6 +98,7 @@ app.get("/api/health", (req, res) => {
 });
 app.use("/api/drivers", driverRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/calls", callRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/administrator", administratorRoutes);

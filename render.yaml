@@ -21,3 +21,15 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+      - key: ICE_STUN_URLS
+        sync: false
+      - key: TURN_URLS
+        sync: false
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false
+      - key: TURN_SHARED_SECRET
+        sync: false
+      - key: TURN_TTL_SECONDS
+        sync: false
