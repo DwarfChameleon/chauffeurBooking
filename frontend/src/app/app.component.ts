@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, effect, HostListener, inject } from '@angular/core';
 import { SplashScreen } from '@capacitor/splash-screen';
-import { NavigationStart, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, NavigationError, NavigationStart, Router, RouterLink } from '@angular/router';
 import { IonApp, IonBadge, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenu, IonRouterOutlet, IonToolbar, MenuController } from '@ionic/angular/standalone';
 import { ApiService } from './core/api.service';
+import { AudioCallService } from './core/audio-call.service';
 import { AuthService } from './core/auth.service';
 import { ThemeService } from './core/theme.service';
 import { LiveCallSession, RealtimeService } from './core/realtime.service';
@@ -73,7 +74,11 @@ import { LiveCallSession, RealtimeService } from './core/realtime.service';
       <p class="call-eyebrow">{{ callStatus }}</p>
       <h2>{{ call.target === 'conference' ? 'Conference call' : call.target === 'support' ? 'Support call' : 'Live booking call' }}</h2>
       <p>{{ call.bookingLabel }}</p>
-      <button class="decline wide" type="button" (click)="endActiveCall()">End call</button>
+      <p class="call-error" *ngIf="callError">{{ callError }}</p>
+      <div class="call-actions">
+        <button class="mute" type="button" (click)="toggleMute()">{{ muted ? 'Unmute' : 'Mute' }}</button>
+        <button class="decline" type="button" (click)="endActiveCall()">End call</button>
+      </div>
     </section>
   </div>
 </ion-app>
@@ -130,10 +135,12 @@ ion-menu ion-item ion-badge { --background:#ef4444; --color:#fff; font-size:10px
 .call-eyebrow { margin:0 0 6px; color:#c39454; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.12em; }
 .call-card h2 { margin:0 0 6px; color:#101828; font-size:23px; font-weight:900; letter-spacing:0; }
 .call-card p { margin:0 0 16px; color:#667085; font-size:13px; line-height:1.4; }
+.call-card .call-error { margin-top:-4px; color:#b42318; font-weight:800; }
 .call-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .call-card button { min-height:48px; border:0; border-radius:8px; font:inherit; font-size:14px; font-weight:900; cursor:pointer; }
 .call-card .decline { background:#fee2e2; color:#b42318; }
 .call-card .accept { background:#16a34a; color:#fff; }
+.call-card .mute { background:rgba(25,84,209,.1); color:#1954d1; }
 .call-card .wide { width:100%; }
 @keyframes call-pulse { from { transform:scale(.98); } to { transform:scale(1.04); } }
 :host-context(body.dark-theme) .call-card,
@@ -151,11 +158,14 @@ export class AppComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly realtime = inject(RealtimeService);
+  private readonly audioCall = inject(AudioCallService);
   notificationCount = 0;
   showAngularSplash = true;
   incomingCall: LiveCallSession | null = null;
   activeCall: LiveCallSession | null = null;
   callStatus = 'Ringing';
+  callError = '';
+  muted = false;
   private swipeStartX: number | null = null;
   private swipeStartY: number | null = null;
 
@@ -163,6 +173,8 @@ export class AppComponent {
     this.finishBootSplash();
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) this.blurFocusedElement();
+      if (event instanceof NavigationEnd) this.clearLazyChunkReloadFlag();
+      if (event instanceof NavigationError) this.recoverFromLazyChunkError(event.error);
     });
     effect(() => {
       const session = this.auth.session();
@@ -172,9 +184,10 @@ export class AppComponent {
     this.realtime.events$.subscribe((event) => {
       if (event.kind === 'notification') this.notificationCount += 1;
       if (event.kind === 'call-ring') this.incomingCall = event.call;
-      if (event.kind === 'call-started') { this.activeCall = event.call; this.callStatus = 'Ringing'; }
-      if (event.kind === 'call-response' && this.activeCall?.id === event.sessionId) this.callStatus = event.accepted ? 'Connected' : 'Declined';
+      if (event.kind === 'call-started') void this.prepareOutgoingCall(event.call);
+      if (event.kind === 'call-response' && this.activeCall?.id === event.sessionId) void this.handleCallResponse(event);
       if (event.kind === 'call-ended') this.clearCall(event.sessionId);
+      if (event.kind === 'call-signal' && this.activeCall?.id === event.sessionId) void this.handleCallSignal(event);
       void this.loadNotificationCount(this.auth.session()?.token, this.auth.session()?.user?.role);
     });
   }
@@ -241,14 +254,36 @@ export class AppComponent {
     if (activeElement instanceof HTMLElement && activeElement.closest('ion-router-outlet')) activeElement.blur();
   }
 
+  private recoverFromLazyChunkError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error || '');
+    if (!/failed to fetch dynamically imported module|loading chunk|module script failed|chunk-\w+\.js/i.test(message)) return;
+    const reloadKey = 'bjed-lazy-chunk-reload';
+    if (sessionStorage.getItem(reloadKey) === '1') return;
+    sessionStorage.setItem(reloadKey, '1');
+    window.location.reload();
+  }
+
+  private clearLazyChunkReloadFlag() {
+    sessionStorage.removeItem('bjed-lazy-chunk-reload');
+  }
+
   async answerCall(accepted: boolean) {
     const call = this.incomingCall;
     if (!call) return;
+    this.callError = '';
+    if (accepted) {
+      try {
+        await this.audioCall.prepare(call.id, this.currentUserId);
+      } catch (error) {
+        this.callError = error instanceof Error ? error.message : 'Could not access microphone.';
+        return;
+      }
+    }
     this.incomingCall = null;
     try {
       const result = await this.realtime.respondToCall(call.id, accepted);
       this.activeCall = accepted ? result.call : null;
-      this.callStatus = accepted ? 'Connected' : 'Declined';
+      this.callStatus = accepted ? 'Connecting audio' : 'Declined';
     } catch {
       this.activeCall = null;
       this.callStatus = 'Ended';
@@ -258,13 +293,61 @@ export class AppComponent {
   async endActiveCall() {
     const call = this.activeCall;
     this.activeCall = null;
+    this.audioCall.stop();
     if (!call) return;
     await this.realtime.endCall(call.id).catch(() => undefined);
   }
 
   private clearCall(sessionId: string) {
     if (this.incomingCall?.id === sessionId) this.incomingCall = null;
-    if (this.activeCall?.id === sessionId) this.activeCall = null;
+    if (this.activeCall?.id === sessionId) {
+      this.activeCall = null;
+      this.audioCall.stop();
+    }
     this.callStatus = 'Ended';
+  }
+
+  private async prepareOutgoingCall(call: LiveCallSession) {
+    this.activeCall = call;
+    this.callStatus = 'Ringing';
+    this.callError = '';
+    try {
+      await this.audioCall.prepare(call.id, this.currentUserId);
+    } catch (error) {
+      this.callError = error instanceof Error ? error.message : 'Could not access microphone.';
+      this.callStatus = 'Microphone blocked';
+    }
+  }
+
+  private async handleCallResponse(event: { sessionId: string; userId: string; accepted: boolean }) {
+    this.callStatus = event.accepted ? 'Connecting audio' : 'Declined';
+    if (!event.accepted || !this.activeCall) return;
+    const isCaller = this.activeCall.callerId === this.currentUserId;
+    const shouldConnect = isCaller || this.activeCall.target === 'conference';
+    if (!shouldConnect) return;
+    try {
+      await this.audioCall.connectToPeer(event.sessionId, event.userId, isCaller);
+      this.callStatus = 'Connected';
+    } catch (error) {
+      this.callError = error instanceof Error ? error.message : 'Could not connect audio.';
+    }
+  }
+
+  private async handleCallSignal(event: { sessionId: string; fromUserId: string; signal: unknown }) {
+    try {
+      await this.audioCall.handleSignal(event.sessionId, event.fromUserId, event.signal);
+      this.callStatus = 'Connected';
+    } catch (error) {
+      this.callError = error instanceof Error ? error.message : 'Audio connection failed.';
+    }
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    this.audioCall.setMuted(this.muted);
+  }
+
+  private get currentUserId() {
+    return this.auth.session()?.user?.id || '';
   }
 }
