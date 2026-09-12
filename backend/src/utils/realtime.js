@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Booking = require("../models/Booking");
+const CallLog = require("../models/CallLog");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
 
@@ -38,10 +39,10 @@ function configureRealtime(server) {
       void initiateSupportCall(socket, callback);
     });
     socket.on("call:respond", (payload, callback) => {
-      respondToCall(socket, payload, callback);
+      void respondToCall(socket, payload, callback);
     });
     socket.on("call:end", (payload, callback) => {
-      endCall(socket, payload, callback);
+      void endCall(socket, payload, callback);
     });
     socket.on("call:signal", (payload, callback) => {
       relayCallSignal(socket, payload, callback);
@@ -62,7 +63,10 @@ async function initiateSupportCall(socket, callback) {
       return acknowledge(callback, { ok: false, message: "No Watchtower admin is online right now. Please submit a ticket or try again shortly." });
     }
 
+    const admins = await User.find({ _id: { $in: adminIds } }).select("name email phone role").lean();
+    const adminLookup = new Map(admins.map((admin) => [String(admin._id), admin]));
     const callerName = caller.name || caller.email || caller.phone || "Support caller";
+    const now = new Date();
     const session = {
       id: makeCallId(),
       bookingId: "",
@@ -71,9 +75,22 @@ async function initiateSupportCall(socket, callback) {
       callerName,
       participants: adminIds,
       acceptedBy: [],
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
       bookingLabel: `Support call from ${callerName}`,
     };
+    const log = await CallLog.create({
+      callSessionId: session.id,
+      source: "support",
+      target: "support",
+      bookingLabel: session.bookingLabel,
+      initiatedBy: caller._id,
+      initiatedByRole: caller.role,
+      initiatedBySnapshot: userSnapshot(caller),
+      participants: adminIds.map((userId) => participantSnapshot(adminLookup.get(userId), "Watchtower admin")),
+      status: "ringing",
+      ringStartedAt: now,
+    });
+    session.logId = String(log._id);
     callSessions.set(session.id, session);
 
     const ringPayload = serializeCallSession(session, "ringing");
@@ -105,30 +122,49 @@ async function initiateCall(socket, payload = {}, callback) {
     }
 
     const participantIds = [];
+    const participantSnapshots = [];
     const participantLabels = [];
     const employerId = booking.user?._id ? String(booking.user._id) : "";
     const driverId = booking.driver?.user?._id ? String(booking.driver.user._id) : "";
     if ((target === "employer" || target === "conference") && employerId) {
       participantIds.push(employerId);
+      participantSnapshots.push(participantSnapshot(booking.user, "Employer"));
       participantLabels.push("Employer");
     }
     if ((target === "driver" || target === "conference") && driverId) {
       participantIds.push(driverId);
+      participantSnapshots.push(participantSnapshot(booking.driver.user, "Driver"));
       participantLabels.push("Driver");
     }
     if (!participantIds.length) return acknowledge(callback, { ok: false, message: "No callable participant found for this booking" });
 
+    const caller = await User.findById(socket.user.id).select("name email phone role").lean();
+    const now = new Date();
     const session = {
       id: makeCallId(),
       bookingId,
       target,
       callerId: String(socket.user.id),
-      callerName: socket.user.name || socket.user.email || "Watchtower",
+      callerName: caller?.name || caller?.email || socket.user.name || socket.user.email || "Watchtower",
       participants: participantIds,
       acceptedBy: [],
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
       bookingLabel: `${booking.user?.name || booking.user?.email || "Employer"} to ${booking.driver?.name || booking.driver?.user?.name || "Chauffeur"}`,
     };
+    const log = await CallLog.create({
+      callSessionId: session.id,
+      source: "booking",
+      target,
+      booking: booking._id,
+      bookingLabel: session.bookingLabel,
+      initiatedBy: socket.user.id,
+      initiatedByRole: caller?.role || socket.user.role,
+      initiatedBySnapshot: userSnapshot(caller || socket.user),
+      participants: participantSnapshots,
+      status: "ringing",
+      ringStartedAt: now,
+    });
+    session.logId = String(log._id);
     callSessions.set(session.id, session);
 
     const ringPayload = serializeCallSession(session, "ringing");
@@ -141,20 +177,25 @@ async function initiateCall(socket, payload = {}, callback) {
   }
 }
 
-function respondToCall(socket, payload = {}, callback) {
+async function respondToCall(socket, payload = {}, callback) {
   const session = callSessions.get(String(payload.sessionId || ""));
   if (!session) return acknowledge(callback, { ok: false, message: "Call no longer available" });
   const userId = String(socket.user.id);
   if (!session.participants.includes(userId)) return acknowledge(callback, { ok: false, message: "You are not part of this call" });
 
   const accepted = Boolean(payload.accepted);
-  if (accepted && !session.acceptedBy.includes(userId)) session.acceptedBy.push(userId);
+  const now = new Date();
+  if (accepted && !session.acceptedBy.includes(userId)) {
+    session.acceptedBy.push(userId);
+    if (!session.startedAt) session.startedAt = now.toISOString();
+  }
+  await recordCallResponse(session, userId, accepted, now);
   const event = {
     sessionId: session.id,
     bookingId: session.bookingId,
     userId,
     accepted,
-    at: new Date().toISOString(),
+    at: now.toISOString(),
   };
   io?.to(`user:${session.callerId}`).emit("call:participant-response", event);
   session.participants.forEach((participantId) => {
@@ -163,14 +204,16 @@ function respondToCall(socket, payload = {}, callback) {
   acknowledge(callback, { ok: true, call: serializeCallSession(session, accepted ? "accepted" : "declined") });
 }
 
-function endCall(socket, payload = {}, callback) {
+async function endCall(socket, payload = {}, callback) {
   const session = callSessions.get(String(payload.sessionId || ""));
   if (!session) return acknowledge(callback, { ok: true });
   const userId = String(socket.user.id);
   const canEnd = userId === session.callerId || session.participants.includes(userId);
   if (!canEnd) return acknowledge(callback, { ok: false, message: "You are not part of this call" });
 
-  const event = { sessionId: session.id, bookingId: session.bookingId, endedBy: userId, at: new Date().toISOString() };
+  const now = new Date();
+  await recordCallEnded(session, userId, now);
+  const event = { sessionId: session.id, bookingId: session.bookingId, endedBy: userId, at: now.toISOString() };
   io?.to(`user:${session.callerId}`).emit("call:ended", event);
   session.participants.forEach((participantId) => io?.to(`user:${participantId}`).emit("call:ended", event));
   callSessions.delete(session.id);
@@ -209,7 +252,84 @@ function serializeCallSession(session, state) {
     bookingLabel: session.bookingLabel,
     participantCount: session.participants.length,
     createdAt: session.createdAt,
+    startedAt: session.startedAt,
   };
+}
+
+function userSnapshot(user = {}) {
+  return {
+    name: user.name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+  };
+}
+
+function participantSnapshot(user = {}, label) {
+  return {
+    user: user?._id,
+    role: label === "Driver" ? "driver" : label === "Employer" ? "user" : user?.role || "admin",
+    label,
+    ...userSnapshot(user),
+  };
+}
+
+function serializeCallLog(log) {
+  return {
+    id: String(log._id),
+    callSessionId: log.callSessionId,
+    source: log.source,
+    target: log.target,
+    bookingId: log.booking ? String(log.booking) : "",
+    bookingLabel: log.bookingLabel,
+    status: log.status,
+    startedAt: log.startedAt,
+    endedAt: log.endedAt,
+    durationSeconds: log.durationSeconds || 0,
+    participantCount: log.participants?.length || 0,
+    createdAt: log.createdAt,
+  };
+}
+
+function emitCallLogUpdated(log) {
+  if (!log) return;
+  io?.to("role:admin").emit("call:log-updated", serializeCallLog(log));
+}
+
+async function recordCallResponse(session, userId, accepted, at) {
+  if (!session.logId) return;
+  const log = await CallLog.findById(session.logId);
+  if (!log) return;
+
+  const participant = log.participants.find((item) => String(item.user || "") === userId);
+  if (participant) {
+    if (accepted && !participant.acceptedAt) participant.acceptedAt = at;
+    if (!accepted && !participant.declinedAt) participant.declinedAt = at;
+  }
+  if (accepted) {
+    if (!log.startedAt) log.startedAt = at;
+    log.status = "active";
+  } else if (!log.participants.some((item) => item.acceptedAt) && log.participants.every((item) => item.declinedAt)) {
+    log.status = "declined";
+    log.endedAt = at;
+    log.durationSeconds = 0;
+  }
+  await log.save();
+  emitCallLogUpdated(log);
+}
+
+async function recordCallEnded(session, endedBy, at) {
+  if (!session.logId) return;
+  const log = await CallLog.findById(session.logId);
+  if (!log) return;
+
+  log.endedAt = at;
+  log.endedBy = endedBy;
+  log.status = log.startedAt ? "ended" : "missed";
+  const startedAt = log.startedAt || log.ringStartedAt || log.createdAt;
+  const seconds = Math.max(0, Math.round((at.getTime() - new Date(startedAt).getTime()) / 1000));
+  log.durationSeconds = Number.isFinite(seconds) ? seconds : 0;
+  await log.save();
+  emitCallLogUpdated(log);
 }
 
 function acknowledge(callback, payload) {

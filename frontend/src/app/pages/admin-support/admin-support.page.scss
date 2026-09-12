@@ -1,0 +1,38 @@
+.admin-page ion-content { --background:var(--admin-bg,#f5f8fc); color:var(--admin-text,#101828); }
+.admin-shell { padding:18px 14px 92px; max-width:1080px; margin:0 auto; }
+.admin-hero h1 { margin:4px 0 0; font-size:24px; color:var(--admin-text,#101828); letter-spacing:0; }
+.eyebrow { margin:0; color:#1954d1; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+.metric-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:18px; }
+.metric-card { border:1px solid rgba(15,23,42,.08); border-radius:8px; padding:14px; display:grid; gap:8px; background:#fff; box-shadow:0 10px 28px rgba(15,23,42,.07); }
+.metric-card ion-icon { width:34px; height:34px; padding:8px; border-radius:50%; color:#fff; }
+.metric-card span { font-size:12px; font-weight:800; color:#526071; }
+.metric-card strong { font-size:25px; color:var(--admin-text,#101828); }
+.metric-card.blue ion-icon { background:#1954d1; }.metric-card.red ion-icon { background:#dc2626; }.metric-card.amber ion-icon { background:#d97706; }.metric-card.green ion-icon { background:#16a34a; }
+.admin-panel { margin-top:16px; padding:14px; border:1px solid var(--admin-line,#dbe5f2); border-radius:8px; background:var(--admin-card,#fff); box-shadow:0 10px 28px rgba(15,23,42,.06); }
+.panel-title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px; }
+.panel-title h2 { margin:2px 0 0; font-size:17px; color:var(--admin-text,#101828); letter-spacing:0; }
+.action-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.action-card { min-height:118px; border:1px solid var(--admin-line,#dbe5f2); border-radius:8px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:7px; padding:13px; color:var(--admin-text,#101828); background:rgba(255,255,255,.86); text-align:left; font:inherit; cursor:pointer; }
+.action-card ion-icon { width:38px; height:38px; padding:9px; border-radius:50%; color:#1954d1; background:rgba(25,84,209,.1); }
+.action-card strong,.action-card small { display:block; }
+.action-card small,.empty { color:var(--admin-muted,#667085); font-size:12px; line-height:1.35; }
+.ticket-row { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; border-top:1px solid var(--admin-line,#e5e7eb); padding:13px 0; }
+.ticket-icon { width:42px; height:42px; border-radius:8px; display:grid; place-items:center; color:#1954d1; background:rgba(25,84,209,.1); }
+.ticket-icon.urgent { color:#dc2626; background:#fee2e2; }
+.ticket-icon.high { color:#d97706; background:#fef3c7; }
+.ticket-main { display:grid; gap:5px; min-width:0; }
+.ticket-main strong,.ticket-main small,.ticket-main span,.ticket-meta small { display:block; }
+.ticket-main p { margin:0; color:var(--admin-muted,#667085); font-size:13px; line-height:1.45; overflow-wrap:anywhere; }
+.ticket-main small,.ticket-main span,.ticket-meta small { color:var(--admin-muted,#667085); font-size:12px; }
+.ticket-main span { font-weight:900; }
+.ticket-meta { display:grid; gap:7px; justify-items:end; text-align:right; }
+.status-badge { width:max-content; border-radius:999px; padding:5px 8px; font-size:10px; font-style:normal; font-weight:900; text-transform:uppercase; color:#334155; background:#e2e8f0; }
+.status-badge.open { color:#92400e; background:#fef3c7; }.status-badge.in_review { color:#1954d1; background:rgba(25,84,209,.12); }.status-badge.resolved,.status-badge.closed { color:#166534; background:#dcfce7; }
+.state { padding:12px; border-radius:8px; margin:12px 0 0; font-weight:800; }
+.error { color:#b91c1c; background:#fee2e2; }
+:host-context(body.dark-theme) { --admin-bg:#070b13; --admin-card:#0d1420; --admin-line:rgba(255,255,255,.1); --admin-text:#f8fafc; --admin-muted:#b7c0cf; }
+:host-context(body.dark-theme) .metric-card,
+:host-context(body.dark-theme) .action-card { background:#111927; border-color:rgba(255,255,255,.1); }
+:host-context(body.dark-theme) .metric-card span { color:#b7c0cf; }
+@media (max-width:840px) { .metric-grid,.action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px) { .ticket-row { grid-template-columns:auto 1fr; } .ticket-meta { grid-column:2; justify-items:start; text-align:left; } }

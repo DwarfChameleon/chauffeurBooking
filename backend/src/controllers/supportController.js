@@ -32,12 +32,15 @@ function serializeTicket(ticket) {
   return {
     id: String(ticket._id),
     ticketNumber: ticket.ticketNumber,
+    userId: ticket.user ? String(ticket.user._id || ticket.user) : "",
+    role: ticket.role,
     category: ticket.category,
     subject: ticket.subject,
     message: ticket.message,
     bookingReference: ticket.bookingReference || "",
     priority: ticket.priority,
     status: ticket.status,
+    contactSnapshot: ticket.contactSnapshot || {},
     createdAt: ticket.createdAt,
     updatedAt: ticket.updatedAt,
   };
@@ -111,6 +114,20 @@ exports.listMySupportTickets = async (req, res) => {
     res.json({ tickets: tickets.map(serializeTicket) });
   } catch (error) {
     console.error("List support tickets failed:", error.message);
+    res.status(500).json({ message: "Could not load support requests" });
+  }
+};
+
+exports.listAllSupportTickets = async (_req, res) => {
+  try {
+    const tickets = await SupportTicket.find({})
+      .sort({ createdAt: -1 })
+      .limit(120)
+      .populate("user", "name email phone role")
+      .lean();
+    res.json({ tickets: tickets.map(serializeTicket) });
+  } catch (error) {
+    console.error("List admin support tickets failed:", error.message);
     res.status(500).json({ message: "Could not load support requests" });
   }
 };

@@ -32,6 +32,8 @@ export const routes: Routes = [
   { path: 'admin/employers', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-employers/admin-employers.page').then((m) => m.AdminEmployersPage) },
   { path: 'admin/drivers', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-drivers/admin-drivers.page').then((m) => m.AdminDriversPage) },
   { path: 'admin/bookings', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-bookings/admin-bookings.page').then((m) => m.AdminBookingsPage) },
+  { path: 'admin/callcenter', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-callcenter/admin-callcenter.page').then((m) => m.AdminCallcenterPage) },
+  { path: 'admin/support', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-support/admin-support.page').then((m) => m.AdminSupportPage) },
   { path: 'admin/verification', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-verification/admin-verification.page').then((m) => m.AdminVerificationPage) },
   { path: 'admin/notifications', canActivate: [adminGuard], loadComponent: () => import('./pages/admin-notifications/admin-notifications.page').then((m) => m.AdminNotificationsPage) },
   { path: 'dashboard', redirectTo: 'employer/dashboard', pathMatch: 'full' },

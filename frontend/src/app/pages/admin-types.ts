@@ -81,6 +81,53 @@ export interface AdminNotice {
   count?: number;
 }
 
+export interface AdminCallParticipant {
+  user?: string;
+  role: 'user' | 'driver' | 'admin';
+  label?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  acceptedAt?: string;
+  declinedAt?: string;
+}
+
+export interface AdminCallLog {
+  id: string;
+  callSessionId: string;
+  source: 'booking' | 'support';
+  target: 'driver' | 'employer' | 'conference' | 'support';
+  bookingId?: string;
+  bookingLabel?: string;
+  initiatedBy?: string;
+  initiatedByRole: 'user' | 'driver' | 'admin';
+  initiatedBySnapshot?: { name?: string; email?: string; phone?: string };
+  participants: AdminCallParticipant[];
+  status: 'ringing' | 'active' | 'ended' | 'declined' | 'missed' | 'failed';
+  ringStartedAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  durationSeconds: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminSupportTicket {
+  id: string;
+  ticketNumber: string;
+  userId?: string;
+  role: 'user' | 'driver' | 'admin';
+  category: string;
+  subject: string;
+  message: string;
+  bookingReference?: string;
+  priority: 'normal' | 'high' | 'urgent';
+  status: 'open' | 'in_review' | 'resolved' | 'closed';
+  contactSnapshot?: { name?: string; email?: string; phone?: string };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AdminOverview {
   summary: {
     users: number;

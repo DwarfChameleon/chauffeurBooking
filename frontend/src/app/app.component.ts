@@ -31,17 +31,20 @@ import { LiveCallSession, RealtimeService } from './core/realtime.service';
       <ion-list lines="none">
         <div class="menu-divider"></div>
         <ng-container *ngIf="role === 'admin'; else workspaceMenu">
-          <ion-item button detail="false" routerLink="/admin/dashboard" (click)="closeMenu()"><ion-icon name="grid-outline" slot="start"></ion-icon><ion-label>Dashboard</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/profile" (click)="closeMenu()"><ion-icon name="person-circle-outline" slot="start"></ion-icon><ion-label>Admin Profile</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/admins" (click)="closeMenu()"><ion-icon name="shield-half-outline" slot="start"></ion-icon><ion-label>Admin Control</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/users" (click)="closeMenu()"><ion-icon name="people-outline" slot="start"></ion-icon><ion-label>Users</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/employers" (click)="closeMenu()"><ion-icon name="business-outline" slot="start"></ion-icon><ion-label>Employers</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/drivers" (click)="closeMenu()"><ion-icon name="car-sport-outline" slot="start"></ion-icon><ion-label>Drivers</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/bookings" (click)="closeMenu()"><ion-icon name="calendar-outline" slot="start"></ion-icon><ion-label>Bookings</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/verification" (click)="closeMenu()"><ion-icon name="shield-checkmark-outline" slot="start"></ion-icon><ion-label>Verification</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/admin/notifications" (click)="closeMenu()"><ion-icon name="notifications-outline" slot="start"></ion-icon><ion-label>Notifications</ion-label><ion-badge slot="end" *ngIf="notificationCount > 0">{{ notificationCount }}</ion-badge></ion-item>
-          <ion-item button detail="false" routerLink="/support" (click)="closeMenu()"><ion-icon name="help-circle-outline" slot="start"></ion-icon><ion-label>Support</ion-label></ion-item>
-          <ion-item button detail="false" routerLink="/settings" (click)="closeMenu()"><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item>
+          <div class="admin-menu-grid">
+            <button class="menu-tile" type="button" routerLink="/admin/dashboard" (click)="closeMenu()"><ion-icon name="grid-outline"></ion-icon><span>Dashboard</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/users" (click)="closeMenu()"><ion-icon name="people-outline"></ion-icon><span>Users</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/bookings" (click)="closeMenu()"><ion-icon name="calendar-outline"></ion-icon><span>Bookings</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/callcenter" (click)="closeMenu()"><ion-icon name="call-outline"></ion-icon><span>Callcenter</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/profile" (click)="closeMenu()"><ion-icon name="person-circle-outline"></ion-icon><span>Profile</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/admins" (click)="closeMenu()"><ion-icon name="shield-half-outline"></ion-icon><span>Admin Control</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/employers" (click)="closeMenu()"><ion-icon name="business-outline"></ion-icon><span>Employers</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/drivers" (click)="closeMenu()"><ion-icon name="car-sport-outline"></ion-icon><span>Drivers</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/verification" (click)="closeMenu()"><ion-icon name="shield-checkmark-outline"></ion-icon><span>Verification</span></button>
+            <button class="menu-tile" type="button" routerLink="/admin/notifications" (click)="closeMenu()"><ion-icon name="notifications-outline"></ion-icon><span>Notifications</span><ion-badge *ngIf="notificationCount > 0">{{ notificationCount }}</ion-badge></button>
+            <button class="menu-tile" type="button" routerLink="/admin/support" (click)="closeMenu()"><ion-icon name="help-circle-outline"></ion-icon><span>Support</span></button>
+            <button class="menu-tile" type="button" routerLink="/settings" (click)="closeMenu()"><ion-icon name="settings-outline"></ion-icon><span>Settings</span></button>
+          </div>
         </ng-container>
         <ng-template #workspaceMenu>
         <ion-item button detail="false" routerLink="/settings" (click)="closeMenu()"><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item>
@@ -74,6 +77,7 @@ import { LiveCallSession, RealtimeService } from './core/realtime.service';
       <p class="call-eyebrow">{{ callStatus }}</p>
       <h2>{{ call.target === 'conference' ? 'Conference call' : call.target === 'support' ? 'Support call' : 'Live booking call' }}</h2>
       <p>{{ call.bookingLabel }}</p>
+      <p class="call-timer">{{ callElapsed }}</p>
       <p class="call-error" *ngIf="callError">{{ callError }}</p>
       <div class="call-actions">
         <button class="mute" type="button" (click)="toggleMute()">{{ muted ? 'Unmute' : 'Mute' }}</button>
@@ -105,6 +109,10 @@ ion-menu ion-item ion-icon { color:var(--menu-icon); font-size:20px; }
 ion-menu ion-item.signout-menu-item { --color:#b42318; margin-top:8px; }
 ion-menu ion-item.signout-menu-item ion-icon { color:#b42318; }
 ion-menu ion-item ion-badge { --background:#ef4444; --color:#fff; font-size:10px; font-weight:900; }
+.admin-menu-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding:2px 0 8px; }
+.menu-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:86px; border:1px solid rgba(var(--app-primary-rgb),.13); border-radius:8px; background:#fff; color:var(--menu-text); font:inherit; font-size:12px; font-weight:900; text-align:center; cursor:pointer; box-shadow:0 8px 22px rgba(15,23,42,.05); }
+.menu-tile ion-icon { color:var(--menu-icon); font-size:30px; }
+.menu-tile ion-badge { position:absolute; top:8px; right:8px; --background:#ef4444; --color:#fff; min-width:18px; height:18px; font-size:10px; font-weight:900; }
 .menu-divider { height:1px; background:var(--menu-divider); margin:12px 10px; }
 :host-context(body.dark-theme) ion-menu.employer-menu ion-content,
 :host-context(body.dark-theme) ion-menu.admin-menu ion-content,
@@ -115,6 +123,8 @@ ion-menu ion-item ion-badge { --background:#ef4444; --color:#fff; font-size:10px
 :host-context(body.dark-theme) ion-menu.employer-menu .menu-divider,
 :host-context(body.dark-theme) ion-menu.admin-menu .menu-divider,
 :host-context(body.driver-dark-theme) ion-menu.driver-menu .menu-divider { background:var(--menu-divider); }
+.admin-menu .menu-tile { background:#fff; }
+:host-context(body.dark-theme) ion-menu.admin-menu .menu-tile { background:#121b2b; border-color:rgba(255,255,255,.1); box-shadow:none; }
 :host-context(body.dark-theme) ion-menu.employer-menu,
 :host-context(body.dark-theme) ion-menu.admin-menu,
 :host-context(body.driver-dark-theme) ion-menu.driver-menu { --menu-bg:#0d1420; --menu-text:#f8fafc; --menu-icon:#d8b4fe; --menu-item-bg:transparent; --menu-divider:rgba(255,255,255,.12); --menu-header-bg:#0b1424; --menu-header-text:#f8fafc; }
@@ -135,6 +145,7 @@ ion-menu ion-item ion-badge { --background:#ef4444; --color:#fff; font-size:10px
 .call-eyebrow { margin:0 0 6px; color:#c39454; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.12em; }
 .call-card h2 { margin:0 0 6px; color:#101828; font-size:23px; font-weight:900; letter-spacing:0; }
 .call-card p { margin:0 0 16px; color:#667085; font-size:13px; line-height:1.4; }
+.call-timer { width:max-content; margin:-4px auto 14px !important; padding:6px 10px; border-radius:999px; color:#1954d1 !important; background:rgba(25,84,209,.1); font-weight:900; letter-spacing:.04em; }
 .call-card .call-error { margin-top:-4px; color:#b42318; font-weight:800; }
 .call-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .call-card button { min-height:48px; border:0; border-radius:8px; font:inherit; font-size:14px; font-weight:900; cursor:pointer; }
@@ -165,9 +176,12 @@ export class AppComponent {
   activeCall: LiveCallSession | null = null;
   callStatus = 'Ringing';
   callError = '';
+  callElapsed = '0:00';
   muted = false;
   private swipeStartX: number | null = null;
   private swipeStartY: number | null = null;
+  private callStartedAt = 0;
+  private callTimerId?: number;
 
   constructor() {
     this.finishBootSplash();
@@ -232,7 +246,7 @@ export class AppComponent {
     const path = this.router.url.split('?')[0].split('#')[0];
     const employerPages = ['/employer/dashboard', '/employer/chauffeurs', '/book-driver', '/employer/profile'];
     const driverPages = ['/driver/dashboard', '/driver/bookings', '/driver/earnings', '/driver/profile'];
-    const adminPages = ['/admin/dashboard', '/admin/profile', '/admin/admins', '/admin/users', '/admin/drivers', '/admin/bookings', '/admin/verification'];
+    const adminPages = ['/admin/dashboard', '/admin/users', '/admin/bookings', '/admin/callcenter'];
     const pages = path.startsWith('/admin/') ? adminPages : path.startsWith('/driver/') ? driverPages : path.startsWith('/employer/') || path === '/book-driver' ? employerPages : [];
     const index = pages.indexOf(path);
     if (index < 0) return;
@@ -284,6 +298,7 @@ export class AppComponent {
       const result = await this.realtime.respondToCall(call.id, accepted);
       this.activeCall = accepted ? result.call : null;
       this.callStatus = accepted ? 'Connecting audio' : 'Declined';
+      if (accepted) this.startCallTimer(result.call.startedAt);
     } catch {
       this.activeCall = null;
       this.callStatus = 'Ended';
@@ -294,6 +309,7 @@ export class AppComponent {
     const call = this.activeCall;
     this.activeCall = null;
     this.audioCall.stop();
+    this.stopCallTimer();
     if (!call) return;
     await this.realtime.endCall(call.id).catch(() => undefined);
   }
@@ -303,6 +319,7 @@ export class AppComponent {
     if (this.activeCall?.id === sessionId) {
       this.activeCall = null;
       this.audioCall.stop();
+      this.stopCallTimer();
     }
     this.callStatus = 'Ended';
   }
@@ -322,6 +339,7 @@ export class AppComponent {
   private async handleCallResponse(event: { sessionId: string; userId: string; accepted: boolean }) {
     this.callStatus = event.accepted ? 'Connecting audio' : 'Declined';
     if (!event.accepted || !this.activeCall) return;
+    this.startCallTimer(this.activeCall.startedAt);
     const isCaller = this.activeCall.callerId === this.currentUserId;
     const shouldConnect = isCaller || this.activeCall.target === 'conference';
     if (!shouldConnect) return;
@@ -349,5 +367,33 @@ export class AppComponent {
 
   private get currentUserId() {
     return this.auth.session()?.user?.id || '';
+  }
+
+  private startCallTimer(startedAt?: string) {
+    if (!this.callStartedAt) {
+      const parsed = startedAt ? new Date(startedAt).getTime() : Date.now();
+      this.callStartedAt = Number.isFinite(parsed) ? parsed : Date.now();
+    }
+    this.updateCallElapsed();
+    if (this.callTimerId) return;
+    this.callTimerId = window.setInterval(() => this.updateCallElapsed(), 1000);
+  }
+
+  private stopCallTimer() {
+    if (this.callTimerId) window.clearInterval(this.callTimerId);
+    this.callTimerId = undefined;
+    this.callStartedAt = 0;
+    this.callElapsed = '0:00';
+  }
+
+  private updateCallElapsed() {
+    if (!this.callStartedAt) {
+      this.callElapsed = '0:00';
+      return;
+    }
+    const seconds = Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000));
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    this.callElapsed = `${minutes}:${remainder.toString().padStart(2, '0')}`;
   }
 }

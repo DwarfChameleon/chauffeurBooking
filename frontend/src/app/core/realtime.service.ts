@@ -2,6 +2,7 @@ import { Injectable, NgZone, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { API_ORIGIN } from './api.service';
+import { AdminCallLog } from '../pages/admin-types';
 
 export type RealtimeEvent =
   | { kind: 'booking'; bookingId: string; status: string; reason: string }
@@ -10,7 +11,8 @@ export type RealtimeEvent =
   | { kind: 'call-started'; call: LiveCallSession }
   | { kind: 'call-response'; sessionId: string; bookingId: string; userId: string; accepted: boolean; at: string }
   | { kind: 'call-ended'; sessionId: string; bookingId: string; endedBy: string; at: string }
-  | { kind: 'call-signal'; sessionId: string; bookingId: string; fromUserId: string; signal: unknown };
+  | { kind: 'call-signal'; sessionId: string; bookingId: string; fromUserId: string; signal: unknown }
+  | { kind: 'call-log-updated'; call: AdminCallLog };
 
 export type LiveCallTarget = 'driver' | 'employer' | 'conference' | 'support';
 
@@ -24,6 +26,7 @@ export interface LiveCallSession {
   bookingLabel: string;
   participantCount: number;
   createdAt: string;
+  startedAt?: string;
 }
 
 type SocketAck<T> = { ok: true; message?: string } & T | { ok: false; message: string };
@@ -46,6 +49,7 @@ export class RealtimeService {
     this.socket.on('call:participant-response', (event: { sessionId: string; bookingId: string; userId: string; accepted: boolean; at: string }) => this.zone.run(() => this.eventsSubject.next({ kind: 'call-response', ...event })));
     this.socket.on('call:ended', (event: { sessionId: string; bookingId: string; endedBy: string; at: string }) => this.zone.run(() => this.eventsSubject.next({ kind: 'call-ended', ...event })));
     this.socket.on('call:signal', (event: { sessionId: string; bookingId: string; fromUserId: string; signal: unknown }) => this.zone.run(() => this.eventsSubject.next({ kind: 'call-signal', ...event })));
+    this.socket.on('call:log-updated', (call: AdminCallLog) => this.zone.run(() => this.eventsSubject.next({ kind: 'call-log-updated', call })));
   }
 
   disconnect() {

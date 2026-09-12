@@ -1,0 +1,77 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Callcenter" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <section class="admin-hero">
+        <p class="eyebrow">Watchtower voice operations</p>
+        <h1>Monitor and start live route calls</h1>
+      </section>
+
+      <section class="metric-grid">
+        <article class="metric-card blue"><ion-icon name="call-outline"></ion-icon><span>Live routes</span><strong>{{ liveBookings.length }}</strong></article>
+        <article class="metric-card green"><ion-icon name="play-circle-outline"></ion-icon><span>Active calls</span><strong>{{ activeCalls.length }}</strong></article>
+        <article class="metric-card amber"><ion-icon name="time-outline"></ion-icon><span>Calls today</span><strong>{{ callsToday }}</strong></article>
+        <article class="metric-card purple"><ion-icon name="bar-chart-outline"></ion-icon><span>Avg duration</span><strong>{{ averageDuration }}</strong></article>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+      <p class="state success" *ngIf="callMessage">{{ callMessage }}</p>
+
+      <section class="admin-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Live route cards</p>
+            <h2>Tap a call option under any active booking</h2>
+          </div>
+        </div>
+
+        <div class="route-grid" *ngIf="liveBookings.length; else noLiveRoutes">
+          <article class="route-card" *ngFor="let booking of liveBookings">
+            <header>
+              <span class="live-dot"></span>
+              <div>
+                <strong>{{ booking.employerName }} to {{ booking.driverName }}</strong>
+                <small>{{ booking.status }} • {{ booking.serviceType }}</small>
+              </div>
+            </header>
+            <p><ion-icon name="location-outline"></ion-icon>{{ booking.pickupAddress || 'Pickup pending' }}</p>
+            <p><ion-icon name="navigate-outline"></ion-icon>{{ booking.destinationAddress || 'Destination pending' }}</p>
+            <small class="contact-line">{{ contactLine(booking) }}</small>
+            <div class="call-options">
+              <button *ngFor="let option of callOptions" type="button" [disabled]="busyBookingId === booking.id" (click)="startCall(booking, option.target)">
+                <ion-icon [name]="option.icon"></ion-icon>
+                <span>{{ option.label }}</span>
+              </button>
+            </div>
+          </article>
+        </div>
+        <ng-template #noLiveRoutes><p class="empty">No live routes are ready for Watchtower calls.</p></ng-template>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Call history</p>
+            <h2>Total user call records</h2>
+          </div>
+        </div>
+
+        <article class="call-row" *ngFor="let call of callHistory">
+          <div class="call-main">
+            <span class="status-badge" [ngClass]="call.status">{{ statusLabels[call.status] }}</span>
+            <strong>{{ call.bookingLabel || (call.source === 'support' ? 'Support call' : 'Booking call') }}</strong>
+            <small>{{ participantSummary(call) }}</small>
+          </div>
+          <div class="call-meta">
+            <span><ion-icon name="time-outline"></ion-icon>{{ formatDuration(call.durationSeconds) }}</span>
+            <span>Started: {{ displayDate(call.startedAt || call.ringStartedAt) }}</span>
+            <span>Ended: {{ displayDate(call.endedAt) }}</span>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!loading && !callHistory.length">No call history recorded yet.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="callcenter"></app-admin-nav>
+</div>

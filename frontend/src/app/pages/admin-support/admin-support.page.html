@@ -1,0 +1,62 @@
+<div class="ion-page admin-page">
+  <app-workspace-header role="admin" title="Admin Support" [showBack]="true" (refreshRequested)="load()"></app-workspace-header>
+  <ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content></ion-refresher>
+    <main class="admin-shell">
+      <section class="admin-hero">
+        <p class="eyebrow">Support operations</p>
+        <h1>Tickets, reports, calls and notifications</h1>
+      </section>
+
+      <section class="metric-grid">
+        <article class="metric-card blue"><ion-icon name="ticket-outline"></ion-icon><span>Open tickets</span><strong>{{ openTickets }}</strong></article>
+        <article class="metric-card red"><ion-icon name="warning-outline"></ion-icon><span>Urgent</span><strong>{{ urgentTickets }}</strong></article>
+        <article class="metric-card amber"><ion-icon name="shield-checkmark-outline"></ion-icon><span>Safety reports</span><strong>{{ safetyReports }}</strong></article>
+        <article class="metric-card green"><ion-icon name="time-outline"></ion-icon><span>Today</span><strong>{{ todayTickets }}</strong></article>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Admin tools</p>
+            <h2>Support command shortcuts</h2>
+          </div>
+        </div>
+        <div class="action-grid">
+          <button class="action-card" *ngFor="let action of actions" type="button" (click)="go(action.route)">
+            <ion-icon [name]="action.icon"></ion-icon>
+            <strong>{{ action.label }}</strong>
+            <small>{{ action.note }}</small>
+          </button>
+        </div>
+      </section>
+
+      <p class="state error" *ngIf="error">{{ error }}</p>
+
+      <section class="admin-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">User reports</p>
+            <h2>Latest support tickets</h2>
+          </div>
+        </div>
+
+        <article class="ticket-row" *ngFor="let ticket of tickets">
+          <div class="ticket-icon" [ngClass]="ticket.priority"><ion-icon [name]="ticket.priority === 'urgent' ? 'warning-outline' : 'ticket-outline'"></ion-icon></div>
+          <div class="ticket-main">
+            <strong>{{ ticket.subject }}</strong>
+            <small>{{ ticket.ticketNumber }} • {{ categoryLabels[ticket.category] || ticket.category }} • {{ contact(ticket) }}</small>
+            <p>{{ ticket.message }}</p>
+            <span *ngIf="ticket.bookingReference">Booking: {{ ticket.bookingReference }}</span>
+          </div>
+          <div class="ticket-meta">
+            <i class="status-badge" [ngClass]="ticket.status">{{ ticket.status }}</i>
+            <small>{{ displayDate(ticket.createdAt) }}</small>
+          </div>
+        </article>
+        <p class="empty" *ngIf="!loading && !tickets.length">No support tickets yet.</p>
+      </section>
+    </main>
+  </ion-content>
+  <app-admin-nav active="callcenter"></app-admin-nav>
+</div>
